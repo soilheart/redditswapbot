@@ -104,6 +104,19 @@ lower_min = 5
 link_id = PRICE_CHECK_POST_LINK_ID
 
 [heatware]
+# Short link id for latest heatware post
 link_id = HEATWARE_POST_LINK_ID
-regex = ^(https?:\/\/(?:www\.)?heatware\.com\/((eval\.php\?id=)|(u\/))\d{1,7})$
-reply = added
+# Regex for heatware (or other sites)
+regex = ^(https?:\/\/(?:www\.)?heatware\.com\/((eval\.php\?id=)|(u\/))\d{1,7}(?:\/to\/?)?)$
+# Reply from the bot when adding new text flair to user
+# Empty string means no reply
+add_msg = Added
+# Report comment if user already have text flair set
+report_overwrite = True
+# Allow bot to overwrite text flair of users
+overwrite_flair = False
+# Message to reply with if user already has text flair set
+# Examples are "Added" if overwrite_flair is true, or
+# "Your flair update needs manual review" if overwrite_flair is false.
+# Empty string means no reply
+overwrite_msg = Your flair update needs manual review
