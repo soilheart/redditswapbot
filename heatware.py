@@ -5,7 +5,7 @@ from log_conf import LoggerManager
 from common import SubRedditMod, DictConfigParser
 
 # Configure logging
-logger = LoggerManager().getLogger(__name__)
+logger = LoggerManager().getLogger("heatware")
 
 
 def process_comment(subreddit, cfg, comment):

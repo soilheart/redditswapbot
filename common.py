@@ -36,7 +36,7 @@ class SubRedditMod(object):
     def login(self):
         # Login
         login_info = self.config["login"]
-        self.logger.debug('Logging in as /u/' + login_info["username"])
+        self.logger.info('Logging in as /u/' + login_info["username"])
         return praw.Reddit(**login_info)
 
     def load_config(self):
