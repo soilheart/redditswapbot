@@ -11,6 +11,7 @@ name = YOUR_SUBREDDIT_NAME
 
 [logging]
 dest = flatfile
+sentry =
 
 [mysql]
 hostname = MYSQL_HOST_NAME
