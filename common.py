@@ -27,6 +27,8 @@ class DictConfigParser(SafeConfigParser):
 class SubRedditMod(object):
     # Helper class to mod a subreddit
 
+    _mods = None
+
     def __init__(self, logger):
         self.logger = logger
         self.config = self.load_config()
@@ -66,9 +68,15 @@ class SubRedditMod(object):
             self.logger.info("Set {}'s flair text to {}".format(comment.author.name, text))
         self.subreddit.flair.set(comment.author, text, css_class)
 
+    def get_mods(self):
+        # Cache mods
+        if self._mods is None:
+            self._mods = self.subreddit.moderator()
+        return self._mods
+
     def check_mod_reply(self, comment):
         # Check if mod already has replied
         for reply in comment.replies.list():
-            if reply.author in self.subreddit.moderator():
+            if reply.author in self.get_mods():
                 return True
         return False
