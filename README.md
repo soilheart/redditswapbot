@@ -2,10 +2,14 @@
 
 ## Description
 
-Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods of /r/hardwareswap and modified for use by /u/chankster, /u/NotMelNoGuitars, and /u/thelectronicnub. There are three currently running instances of the bot, /u/hwsbot, /u/mechkbot, /u/funkoswapbot.  Finally updated to support Praw v5.
+Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods of /r/hardwareswap and modified for use by /u/chankster, /u/NotMelNoGuitars, /u/thelectronicnub, and /u/soilheart. There are three currently running instances of the bot, /u/hwsbot, /u/mechkbot, /u/funkoswapbot.  Finally updated to support Praw v5.
 
 ## Files
 
+* **common.py**
+  * Contains two helper classes
+  * DictConfigParser, wrapper for SafeConfigParser to enable accessing the settings as a Dict
+  * SubRedditMod, helper class to do common subreddit moderation tasks through PRAW
 * **flair.py**
   * Watches the current confirmed trade post (specified in config.cfg) and updates user flair.
   * Normally fired via cronjob.
@@ -29,7 +33,7 @@ Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods o
 * **monthly_price_post.py**
   * Creates a new price post, stickies it in the bottom position, updates the sidebar based on regex, updates config file.
   * Normally fired via cronjob.
-* **util/flair_sql_import.py** 
+* **util/flair_sql_import.py**
   * Used to seed the sqlite database with initial flair values.
   * Extract the current subreddit flair values to json using [modutils](https://github.com/praw-dev/prawtools).
   * **Must be done before running flair.py otherwise any flair > flairdev in config will be reported as a deviation.**
@@ -37,4 +41,3 @@ Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods o
   * Set subreddit flair via csv or json files
 
 ## TODO
-
