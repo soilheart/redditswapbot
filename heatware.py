@@ -1,16 +1,17 @@
 #!/usr/bin/env python2
+""" Heatware flair updater """
 
 import re
 from log_conf import LoggerManager
-from common import SubRedditMod, DictConfigParser
+from common import SubRedditMod
 
 # Configure logging
-logger = LoggerManager().getLogger("heatware")
+LOGGER = LoggerManager().getLogger("heatware")
 
 
 def process_comment(subreddit, cfg, comment):
     """ Process a heatware thread comment"""
-    logger.debug("Processing comment: " + comment.id)
+    LOGGER.debug("Processing comment: " + comment.id)
     if subreddit.check_mod_reply(comment):
         # If a mod has already replied, case closed
         return
@@ -51,11 +52,13 @@ def process_thread(subreddit):
 
 
 def main():
+    """ Main function, tries to parse thread and adjust flairs """
     try:
-        subreddit = SubRedditMod(logger)
+        subreddit = SubRedditMod(LOGGER)
         process_thread(subreddit)
-    except Exception as e:
-        logger.error(e)
+    except Exception as exc:
+        LOGGER.error(exc)
+
 
 if __name__ == '__main__':
     main()
