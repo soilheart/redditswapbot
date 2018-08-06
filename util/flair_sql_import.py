@@ -18,20 +18,19 @@ def main():
     args = parser.parse_args()
 
     try:
-        con = lite.connect('flair.db')
+        con = lite.connect('user.db')
     except lite.Error, e:
         print "Error %s:" % e.args[0]
         sys.exit(1)
 
     curs = con.cursor()
 
-    curs.execute('''CREATE TABLE IF NOT EXISTS flair (
+    curs.execute('''CREATE TABLE IF NOT EXISTS user (
 username TEXT PRIMARY KEY NOT NULL ,
 flair_text TEXT,
 flair_css_class TEXT,
-lastpost timestamp,
-lastpostid TEXT,
-lastid TEXT DEFAULT ''
+last_created timestamp,
+last_id TEXT DEFAULT ''
 )''')
 
     flair_json = json.load(open(args.filename))

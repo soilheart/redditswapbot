@@ -72,15 +72,26 @@ class SubRedditMod(object):
             self.logger.info("Set {}'s flair text to {}".format(comment.author.name, text))
         self.subreddit.flair.set(comment.author, text, css_class)
 
+    def get_new(self, limit=20):
+        """ Get new posts """
+        return self.subreddit.new(limit=limit)
+
     def get_mods(self):
         """ Cache mods """
         if self._mods is None:
             self._mods = self.subreddit.moderator()
         return self._mods
 
-    def check_mod_reply(self, comment):
+    def check_mod_reply(self, item):
         """ Check if mod already has replied """
-        for reply in comment.replies.list():
-            if reply.author in self.get_mods():
+        if isinstance(item, praw.models.reddit.submission.Submission):
+            comments = item.comments
+        elif isinstance(item, praw.models.reddit.comment.Comment):
+            comments = item.replies
+        else:
+            raise TypeError, "Unknown item type"
+
+        for comment in comments.list():
+            if comment.author in self.get_mods():
                 return True
         return False
