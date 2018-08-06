@@ -38,8 +38,8 @@ def check_post(post, config, db_cursor):
         if post.id != last_id:
             LOGGER.info("Checking post {} for repost violation".format(post.id))
             seconds_between_posts = (post_created - last_created).total_seconds()
-            if seconds_between_posts < config["upper_hour"] * 3600:
-                LOGGER.info("Reported because time between posts: {}".format(post_created - last_created))
+            if seconds_between_posts < int(config["upper_hour"]) * 3600:
+                LOGGER.info("Reported because seconds between posts: {}".format(seconds_between_posts))
                 LOGGER.info("Last created {}".format(last_created))
                 LOGGER.info("Post created {}".format(post_created))
                 post.report("Possible repost: https://redd.it/{}".format(last_id))
