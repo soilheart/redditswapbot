@@ -37,8 +37,11 @@ def check_post(post, config, db_cursor):
         last_created = db_row["last_created"]
         if post.id != last_id:
             LOGGER.info("Checking post {} for repost violation".format(post.id))
-            time_between_posts = (post_created - last_created).seconds
-            if time_between_posts < config["upper_hour"] * 3600:
+            seconds_between_posts = (post_created - last_created).total_seconds()
+            if seconds_between_posts < config["upper_hour"] * 3600:
+                LOGGER.info("Reported because time between posts: {}".format(post_created - last_created))
+                LOGGER.info("Last created {}".format(last_created))
+                LOGGER.info("Post created {}".format(post_created))
                 post.report("Possible repost: https://redd.it/{}".format(last_id))
         db_cursor.execute('''UPDATE OR IGNORE user SET last_created=?, last_id=? WHERE username=?''',
                           (post_created, post.id, post.author.name, ))
