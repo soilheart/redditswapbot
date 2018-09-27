@@ -19,35 +19,42 @@ LOGGER = LoggerManager().getLogger("post_check")
 PERSONAL_RE = re.compile(r"^\[[A-Z]{2}-?[A-Z]{,2}\] ?\[H\].*\[W\].*")
 
 
+def update_user_db(db_cursor, post):
+    post_created = datetime.utcfromtimestamp(post.created_utc)
+    db_cursor.execute('UPDATE OR IGNORE user SET last_created=?, last_id=? WHERE username=?',
+                      (post_created, post.id, post.author.name))
+
+
+def add_to_user_db(db_cursor, post):
+    post_created = datetime.utcfromtimestamp(post.created_utc)
+    db_cursor.execute('INSERT OR IGNORE INTO user (username, last_created, last_id) VALUES (?, ?, ?)',
+                      (post.author.name, post_created, post.id))
+
+
 def check_post(post, config, db_cursor):
     """
     Check post for rule violations
     Currently only checks repost violations
     """
 
-    db_cursor.execute(
-        '''SELECT username, last_id, last_created as "last_created [timestamp]" FROM user WHERE username=?''',
-        (post.author.name,))
-    db_row = db_cursor.fetchone()
+    db_cursor.execute('SELECT username, last_id, last_created as "last_created [timestamp]" '
+                      'FROM user WHERE username=?', (post.author.name,))
 
-    post_created = datetime.utcfromtimestamp(post.created_utc)
+    db_row = db_cursor.fetchone()
 
     if db_row is not None:
         last_id = db_row["last_id"]
         last_created = db_row["last_created"]
         if post.id != last_id:
             LOGGER.info("Checking post {} for repost violation".format(post.id))
+            post_created = datetime.utcfromtimestamp(post.created_utc)
             seconds_between_posts = (post_created - last_created).total_seconds()
             if seconds_between_posts < int(config["upper_hour"]) * 3600:
                 LOGGER.info("Reported because seconds between posts: {}".format(seconds_between_posts))
-                LOGGER.info("Last created {}".format(last_created))
-                LOGGER.info("Post created {}".format(post_created))
                 post.report("Possible repost: https://redd.it/{}".format(last_id))
-        db_cursor.execute('''UPDATE OR IGNORE user SET last_created=?, last_id=? WHERE username=?''',
-                          (post_created, post.id, post.author.name, ))
+        update_user_db(db_cursor, post)
     else:
-        db_cursor.execute('''INSERT OR IGNORE INTO user (username, last_created, last_id) VALUES (?, ?, ?)''',
-                          (post.author.name, post_created, post.id, ))
+        add_to_user_db(db_cursor, post)
 
 
 def main():
