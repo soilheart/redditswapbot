@@ -52,6 +52,7 @@ def check_post(post, config, db_cursor):
             if seconds_between_posts < int(config["upper_hour"]) * 3600:
                 LOGGER.info("Reported because seconds between posts: {}".format(seconds_between_posts))
                 post.report("Possible repost: https://redd.it/{}".format(last_id))
+                return
         update_user_db(db_cursor, post)
     else:
         add_to_user_db(db_cursor, post)
