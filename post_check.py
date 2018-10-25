@@ -43,7 +43,7 @@ def main():
                         clean_title = unicodedata.normalize('NFKD', post.title).encode('ascii', 'ignore')
                         removedpost = False
                         already_done.append(post.id)
-                        matchObj = re.search("\[(?:AF|AX|AL|DZ|AD|AO|AI|AQ|AG|AR|AM|AW|AU|EU-AT|AZ|BS|BH|BD|BB|BY|EU-BE|BZ|BJ|BM|BT|BO|BQ|BA|BW|BV|BR|IO|BN|EU-BG|BF|BI|KH|CM|CV|KY|CF|TD|CL|CN|CX|CC|CO|KM|CG|CD|CK|CR|CI|EU-HR|CU|CW|EU-CY|EU-CZ|EU-DK|DJ|DM|DO|EC|EG|SV|GQ|ER|EU-EE|ET|FK|FO|FJ|EU-FI|EU-FR|GF|PF|TF|GA|GM|GE|EU-DE|GH|GI|EU-GR|GL|GD|GP|GT|GG|GN|GW|GY|HT|HM|VA|HN|HK|EU-HU|IS|IN|ID|IR|IQ|EU-IE|IM|IL|EU-IT|JM|JP|JE|JO|KZ|KE|KI|KP|KR|KW|KG|LA|EU-LV|LB|LS|LR|LY|LI|EU-LT|EU-LU|MO|MK|MG|MW|MY|MV|ML|EU-MT|MH|MQ|MR|MU|YT|MX|FM|MD|MC|MN|ME|MS|MA|MZ|MM|NA|NR|NP|EU-NL|NC|NZ|NI|NE|NG|NU|NF|NO|OM|PK|PW|PS|PA|PG|PY|PE|PH|PN|EU-PL|EU-PT|QA|RE|EU-RO|RU|RW|BL|SH|KN|LC|MF|PM|VC|WS|SM|ST|SA|SN|RS|SC|SL|SG|SX|EU-SK|EU-SI|SB|SO|ZA|GS|SS|EU-ES|LK|SD|SR|SJ|SZ|EU-SE|CH|SY|TW|TJ|TZ|TH|TL|TG|TK|TO|TT|TN|TR|TM|TC|TV|UG|UA|AE|EU-UK|UY|UZ|VU|VE|VN|VG|WF|EH|YE|ZM|ZW|US-DC|US-AL|US-AK|US-AZ|US-AR|US-CA|US-CO|US-CT|US-DE|US-FL|US-GA|US-HI|US-ID|US-IL|US-IN|US-IA|US-KS|US-KY|US-LA|US-ME|US-MD|US-MA|US-MI|US-MN|US-MS|US-MO|US-MT|US-NE|US-NV|US-NH|US-NJ|US-NM|US-NY|US-NC|US-ND|US-OH|US-OK|US-OR|US-PA|US-RI|US-SC|US-SD|US-TN|US-TX|US-UT|US-VT|US-VA|US-WA|US-WV|US-WI|US-WY|US-AS|US-GU|US-MP|US-PR|US-VI|US-UM|US-AA|US-AE|US-AP|CA-AB|CA-BC|CA-MB|CA-NB|CA-NL|CA-NS|CA-ON|CA-PE|CA-QC|CA-SK|CA-NT|CA-YT|CA-NU)\].*\[H\].*(\[W\].*)|(^\[META\].*)|(^\[GB\].*)|(^\[IC\].*)|(^\[Artisan\].*)|(^\[Vendor\].*)|(^\[Giveaway\].*)", post.title)
+                        matchObj = re.search("\[(?:AF|AX|AL|DZ|AD|AO|AI|AQ|AG|AR|AM|AW|AU|EU-AT|AZ|BS|BH|BD|BB|BY|EU-BE|BZ|BJ|BM|BT|BO|BQ|BA|BW|BV|BR|IO|BN|EU-BG|BF|BI|KH|CM|CV|KY|CF|TD|CL|CN|CX|CC|CO|KM|CG|CD|CK|CR|CI|EU-HR|CU|CW|EU-CY|EU-CZ|EU-DK|DJ|DM|DO|EC|EG|SV|GQ|ER|EU-EE|ET|FK|FO|FJ|EU-FI|EU-FR|GF|PF|TF|GA|GM|GE|EU-DE|GH|GI|EU-GR|GL|GD|GP|GT|GG|GN|GW|GY|HT|HM|VA|HN|HK|EU-HU|IS|IN|ID|IR|IQ|EU-IE|IM|IL|EU-IT|JM|JP|JE|JO|KZ|KE|KI|KP|KR|KW|KG|LA|EU-LV|LB|LS|LR|LY|LI|EU-LT|EU-LU|MO|MK|MG|MW|MY|MV|ML|EU-MT|MH|MQ|MR|MU|YT|MX|FM|MD|MC|MN|ME|MS|MA|MZ|MM|NA|NR|NP|EU-NL|NC|NZ|NI|NE|NG|NU|NF|NO|OM|PK|PW|PS|PA|PG|PY|PE|PH|PN|EU-PL|EU-PT|QA|RE|EU-RO|RU|RW|BL|SH|KN|LC|MF|PM|VC|WS|SM|ST|SA|SN|RS|SC|SL|SG|SX|EU-SK|EU-SI|SB|SO|ZA|GS|SS|EU-ES|LK|SD|SR|SJ|SZ|EU-SE|CH|SY|TW|TJ|TZ|TH|TL|TG|TK|TO|TT|TN|TR|TM|TC|TV|UG|UA|AE|EU-UK|UY|UZ|VU|VE|VN|VG|WF|EH|YE|ZM|ZW|US-DC|US-AL|US-AK|US-AZ|US-AR|US-CA|US-CO|US-CT|US-DE|US-FL|US-GA|US-HI|US-ID|US-IL|US-IN|US-IA|US-KS|US-KY|US-LA|US-ME|US-MD|US-MA|US-MI|US-MN|US-MS|US-MO|US-MT|US-NE|US-NV|US-NH|US-NJ|US-NM|US-NY|US-NC|US-ND|US-OH|US-OK|US-OR|US-PA|US-RI|US-SC|US-SD|US-TN|US-TX|US-UT|US-VT|US-VA|US-WA|US-WV|US-WI|US-WY|US-AS|US-GU|US-MP|US-PR|US-VI|US-UM|US-AA|US-AE|US-AP|CA-AB|CA-BC|CA-MB|CA-NB|CA-NL|CA-NS|CA-ON|CA-PE|CA-QC|CA-SK|CA-NT|CA-YT|CA-NU)\].*\[H\].*(\[W\].*)|(^\[META\].*)|(^\[GB\].*)|(^\[IC\].*)|(^\[Artisan\].*)|(^\[Vendor\].*)|(^\[Giveaway\].*)|(^\[Service\].*)", post.title)
                         match2Obj = re.search("(\[selling\])|(\[buying\])", post.title, re.IGNORECASE)
                         if (not matchObj or match2Obj) and not post.distinguished:
                             if post.author.name != username:
@@ -53,7 +53,7 @@ def main():
                                     post.reply('REMOVED: Your post was automatically removed due to an incorrect title. Please read the [wiki](/r/' + subreddit + '/wiki/rules/rules) for posting rules').mod.distinguish()
                                     post.mod.remove()
                                 else:
-                                    logger.warn('Bad post approved by: ' + post.approved_by.name)
+                                    logger.warn('Bad post approved by: ' + post.approved_by)
                         else:
                             log_msg = ""
                             log_msg_level = ""
@@ -64,6 +64,7 @@ def main():
                             gbMatch = re.search("\[GB\].*", post.title)
                             artisanMatch = re.search("\[Artisan\].*", post.title)
                             vendorMatch = re.search("\[Vendor\].*", post.title)
+                            serviceMatch = re.search("\[Service\].*", post.title)
                             if not post.link_flair_text:
                                 if not post.distinguished:
                                     if sellingMatch:
@@ -90,6 +91,9 @@ def main():
                                     elif vendorMatch:
                                         post.mod.flair(text='Vendor', css_class='vendor')
                                         log_msg = "Vendor: " + clean_title
+                                    elif serviceMatch:
+                                        post.mod.flair(text='Service', css_class='service')
+                                        log_msg = "Service: " + clean_title
                                     else:
                                         post.link_flair_text = 'Trading'
                                         post.mod.flair(text='Trading', css_class='trading')
@@ -99,6 +103,8 @@ def main():
 
                             # check comments for info from bot
                             if not post.distinguished:
+                                author_flair_css_class = str(post.author_flair_css_class)
+                                author_flair_text = str(post.author_flair_text)
                                 post.comments.replace_more(limit=0)
                                 flat_comments = post.comments.list()
                                 botcomment = 0
@@ -111,19 +117,15 @@ def main():
                                 # have to check both flair class and regex match.  (flair class is none if just set)
                                 if botcomment == 0 and (not metaMatch or post.link_flair_text != "Meta"):
                                     age = str(datetime.utcfromtimestamp(post.author.created_utc))
-                                    if str(post.author_flair_text) == "None":
+                                    if author_flair_text == "None":
                                         heatware = "None"
                                     else:
-                                        heatware = "[" + str(post.author_flair_text) + "](" + str(post.author_flair_text) + ")"
-                                    if str(post.author_flair_css_class) == "None":
-                                        post.author.flair_css_class = "i-none"
-                                    if str(post.author_flair_css_class) == "i-mod":
-                                        post.reply('* Username: ' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: User is currently a moderator.\n* Flair text: ' + str(post.author_flair_text) + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + '/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
+                                        heatware = "[" + author_flair_text + "](" + author_flair_text + ")"
+
+                                    if author_flair_css_class == "i-mod":
+                                        post.reply('* Username: ' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: User is currently a moderator.\n* Flair text: ' + author_flair_text + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + '/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
                                     else:
-                                        if str(post.author_flair_css_class) == "i-none":
-                                            post.reply('* Username: /u/' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: No trades' '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + '/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
-                                        else:
-                                            post.reply('* Username: /u/' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: ' + str(post.author_flair_css_class).translate(None, 'i-') + ' trade(s)' '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + '/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
+                                        post.reply('* Username: /u/' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: ' + author_flair_css_class.translate(None, 'i-') + ' trade(s)' '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + '/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
 
                             if (log_msg_level == 'warn'):
                                 logger.warning(log_msg)

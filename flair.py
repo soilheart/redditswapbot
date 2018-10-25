@@ -57,7 +57,6 @@ def main():
         if comment.author.name == parent.author.name:
             comment.report('Flair: Self Reply')
             parent.report('Flair: Self Reply')
-            save()
             return False
         return True
 
@@ -69,12 +68,10 @@ def main():
             if age < age_check:
                 item.report('Flair: Account Age')
                 item.reply(age_warning)
-                save()
                 return False
             if karma < karma_check:
                 item.report('Flair: Account Karma')
                 item.reply(karma_warning)
-                save()
                 return False
         return True
 
@@ -98,14 +95,15 @@ def main():
                 if com.author.name == item.author.name:
                     com.author_flair_css_class = item.author_flair_css_class
 
-    def save():
+    def save(comments):
         with open(link_id + ".log", 'a') as myfile:
+            for comment in comments:
                 myfile.write('%s\n' % comment.id)
 
     try:
         # Load old comments
         with open(link_id + ".log", 'a+') as myfile:
-            completed = myfile.read()
+            completed = myfile.read().split()
 
         # Log in
         logger.info('Logging in as /u/' + username)
@@ -130,11 +128,11 @@ def main():
             if not conditions():
                 continue
             parent = [com for com in flat_comments if com.fullname == comment.parent_id][0]
+            save([comment, parent])
             if not hasattr(parent.author, 'link_karma'):
                 continue
             if not check_self_reply(comment, parent):
                 continue
-
             if not comment.author.name.lower() in parent.body.lower():
                 continue
 
@@ -152,7 +150,6 @@ def main():
             flair(comment)
             flair(parent)
             comment.reply(added_msg)
-            save()
 
     except Exception as e:
         logger.error(e)
