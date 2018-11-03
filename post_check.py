@@ -67,19 +67,23 @@ class PostChecker(object):
             return False
 
         timestamp_check = False
+        flair_class = self._config["default_flair_class"]
         for category in self._post_categories["personal"]:
             if "want" in category:
                 assert "have" not in category, "Limitation of script"
                 regex = category["want"].replace("\\\\", "\\")
                 if re.search(regex, want, re.IGNORECASE):
+                    category = category_name
                     print(want, "matches", category["name"])
                     timestamp_check |= category["timestamp_check"]
             if "have" in category:
                 assert "want" not in category, "Limitation of script"
                 regex = category["have"].replace("\\\\", "\\")
                 if re.search(regex, have, re.IGNORECASE):
+                    category = category_name
                     print(have, "matches", category["name"])
                     timestamp_check |= category["timestamp_check"]
+        print(clean_title, " categorized as ", category)
 
         self.check_repost(post)
 
@@ -126,6 +130,8 @@ class PostChecker(object):
                 return
 
         elif self._is_nonpersonal_post(clean_title):
+            # TODO: Add strict format check (not necessary at the moment)
+
             if not self.check_and_flair_nonpersonal_post(post, clean_title):
                 print("!*80")
                 return

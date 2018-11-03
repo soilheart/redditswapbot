@@ -1,0 +1,54 @@
+{
+    "personal":
+    [
+	{
+	    "want": "(cash|paypal|\\$|google w|money)",
+	    "name": "Selling",
+	    "class": "selling",
+	    "timestamp_check": true
+	},
+	{
+	    "have": "(cash|paypal|\\$|google w|money)",
+	    "name": "Buying",
+	    "class": "buying",
+	    "timestamp_check": false
+	},
+	{
+	    "want": "(trade)",
+	    "name": "Trading",
+	    "class": "trading",
+	    "timestamp_check": true
+	}
+    ],
+    "nonpersonal":
+    [
+	{
+	    "tag": "META",
+	    "name": "META",
+	    "class": "meta",
+	    "required_flair": "i-mod",
+	    "no_reply": true
+	},
+	{
+	    "tag": "IC",
+	    "name": "Interest Check",
+	    "class": "interestcheck"
+	},
+	{
+	    "tag": "GB",
+	    "name": "Group Buy",
+	    "class": "groupbuy"
+	},
+	{
+	    "tag": "Artisan",
+	    "name": "Artisan",
+	    "class": "artisan"
+	},
+	{
+	    "tag": "Vendor",
+	    "name": "Vendor",
+	    "class": "vendor",
+	    "required_flair": "i-vendor"
+	}
+    ]
+}
