@@ -73,17 +73,17 @@ class PostChecker(object):
                 assert "have" not in category, "Limitation of script"
                 regex = category["want"].replace("\\\\", "\\")
                 if re.search(regex, want, re.IGNORECASE):
-                    category = category_name
                     print(want, "matches", category["name"])
+                    flair_class = category["class"]
                     timestamp_check |= category["timestamp_check"]
             if "have" in category:
                 assert "want" not in category, "Limitation of script"
                 regex = category["have"].replace("\\\\", "\\")
                 if re.search(regex, have, re.IGNORECASE):
-                    category = category_name
                     print(have, "matches", category["name"])
+                    flair_class = category["class"]
                     timestamp_check |= category["timestamp_check"]
-        print(clean_title, " categorized as ", category)
+        print(clean_title, " flaired as ", flair_class)
 
         self.check_repost(post)
 
