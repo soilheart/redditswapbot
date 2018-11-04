@@ -18,6 +18,7 @@ LOGGER = LoggerManager().getLogger("post_check")
 
 
 class PostChecker(object):
+    """ Post check helper """
 
     def __init__(self, config, db_con, post_categories, locations):
         self._config = config
@@ -28,19 +29,19 @@ class PostChecker(object):
 
     def _get_user_db_entry(self, post):
         self._user_db_cursor.execute('SELECT username, last_id, last_created as "last_created [timestamp]" '
-                               'FROM user WHERE username=?', (post.author.name,))
+                                     'FROM user WHERE username=?', (post.author.name,))
 
         return self._user_db_cursor.fetchone()
 
     def _update_user_db(self, post):
         post_created = datetime.utcfromtimestamp(post.created_utc)
         self._user_db_cursor.execute('UPDATE OR IGNORE user SET last_created=?, last_id=? WHERE username=?',
-                               (post_created, post.id, post.author.name))
+                                     (post_created, post.id, post.author.name))
 
     def _add_to_user_db(self, post):
         post_created = datetime.utcfromtimestamp(post.created_utc)
         self._user_db_cursor.execute('INSERT OR IGNORE INTO user (username, last_created, last_id) VALUES (?, ?, ?)',
-                               (post.author.name, post_created, post.id))
+                                     (post.author.name, post_created, post.id))
 
     def _is_personal_post(self, title):
         return bool(re.search(self._config["trade_post_format"], title))
@@ -48,7 +49,8 @@ class PostChecker(object):
     def _is_nonpersonal_post(self, title):
         return bool(re.search(self._config["informational_post_format"], title))
 
-    def check_and_flair_personal_post(self, post, clean_title):
+    def check_and_flair_personal(self, post, clean_title):
+        """ Check title of personal post and flair accordingly """
 
         location, have, want = re.search(self._config["trade_post_format"], clean_title).groups()
 
@@ -59,7 +61,7 @@ class PostChecker(object):
             secondary = location
 
         if primary not in self._locations:
-            print(primary, " not in ", self._locations)
+            print(primary, " not in ", self._locations.keys())
             return False
 
         if secondary not in self._locations[primary]:
@@ -94,7 +96,9 @@ class PostChecker(object):
 
         return True
 
-    def check_and_flair_nonpersonal_post(self, post, clean_title):
+    def check_and_flair_nonpersonal(self, post, clean_title):
+        """ Check title of personal post and flair accordingly """
+
         tag = re.search(self._config["informational_post_format"], clean_title).group(1)
 
         for category in self._post_categories["nonpersonal"]:
@@ -105,9 +109,8 @@ class PostChecker(object):
                         print("User not having the expected flair ", category["required_flair"])
                         return False
                 return True
-        else:
-            print("Bad tag ", tag)
-            return False
+        print("Bad tag ", tag)
+        return False
 
     def check_post(self, post):
         """
@@ -121,26 +124,25 @@ class PostChecker(object):
         if self._is_personal_post(clean_title):
             if "trade_post_format_strict" in self._config:
                 if not bool(re.match(self._config["trade_post_format_strict"], clean_title)):
-                    print("!*80")
+                    print("!"*80)
                     print(clean_title, " failed strict check")
                     return
 
-            if not self.check_and_flair_personal_post(post, clean_title):
-                print("!*80")
+            if not self.check_and_flair_personal(post, clean_title):
+                print("!"*80)
                 return
 
         elif self._is_nonpersonal_post(clean_title):
             # TODO: Add strict format check (not necessary at the moment)
 
-            if not self.check_and_flair_nonpersonal_post(post, clean_title):
-                print("!*80")
+            if not self.check_and_flair_nonpersonal(post, clean_title):
+                print("!"*80)
                 return
 
         else:
             print(clean_title, " did not match any format")
-            print("!*80")
+            print("!"*80)
             return
-
 
         print("Post looks fine! Commenting")
 
@@ -158,7 +160,7 @@ class PostChecker(object):
                 post_created = datetime.utcfromtimestamp(post.created_utc)
                 seconds_between_posts = (post_created - last_created).total_seconds()
                 if (seconds_between_posts < int(self._config["upper_hour"]) * 3600 and
-                    seconds_between_posts > int(self._config["lower_min"]) * 60):
+                        seconds_between_posts > int(self._config["lower_min"]) * 60):
                     LOGGER.info("Reported because seconds between posts: {}".format(seconds_between_posts))
                     post.report("Possible repost: https://redd.it/{}".format(last_id))
                     return
@@ -185,8 +187,8 @@ def main():
         db_con = sqlite3.connect(user_db, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         db_con.row_factory = sqlite3.Row
         post_checker = PostChecker(subreddit.config["post_check"], db_con, post_categories, locations)
-    except Exception as e:
-        LOGGER.error(e)
+    except Exception as exception:
+        LOGGER.error(exception)
         sys.exit()
 
     while True:
@@ -203,11 +205,11 @@ def main():
                     post_checker.check_post(post)
                     processed.append(post.id)
                 first_pass = False
-                LOGGER.debug('Sleeping for 5 minutes')
-                sleep(360)
-        except Exception as e:
-            LOGGER.error(e)
-            sleep(360)
+                LOGGER.debug('Sleeping for 1 minute')
+                sleep(60)
+        except Exception as exception:
+            LOGGER.error(exception)
+            sleep(60)
 
 
 if __name__ == '__main__':
