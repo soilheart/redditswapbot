@@ -75,14 +75,14 @@ class PostChecker(object):
                 if re.search(regex, want, re.IGNORECASE):
                     print(want, "matches", category["name"])
                     flair_class = category["class"]
-                    timestamp_check |= category["timestamp_check"]
+                    timestamp_check = category["timestamp_check"]
             if "have" in category:
                 assert "want" not in category, "Limitation of script"
                 regex = category["have"].replace("\\\\", "\\")
                 if re.search(regex, have, re.IGNORECASE):
                     print(have, "matches", category["name"])
                     flair_class = category["class"]
-                    timestamp_check |= category["timestamp_check"]
+                    timestamp_check = category["timestamp_check"]
         print(clean_title, " flaired as ", flair_class)
 
         self.check_repost(post)
