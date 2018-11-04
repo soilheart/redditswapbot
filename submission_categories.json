@@ -49,6 +49,11 @@
 	    "name": "Vendor",
 	    "class": "vendor",
 	    "required_flair": "i-vendor"
+	},
+	{
+	    "tag": "Service",
+	    "name": "Service",
+	    "class": "service"
 	}
     ]
 }

@@ -40,7 +40,7 @@ notrade_flairclass = ['vendor', 'mod']
 # For categorization of trade posts
 trade_post_format = \[(.*)\].*\[H\](.*)\[W\](.*)
 # Formatting check, should be stricter than above expression, remove line if previous check is enough for your use
-trade_post_format_strict = ^\[[A-Z]{2}-?[A-Z]{,2}\] ?\[H\][^\[\]]*\[W\][^\[\]]*
+trade_post_format_strict = ^\[[A-Z-]{2,}\] ?\[H\][^\[\]]*\[W\][^\[\]]*
 # Informational posts have their categorization and strict check done at the same time
 informational_post_format = ^\[([^\[\]]*)\][^\[\]]*$
 # Regex for checking for timestamps
