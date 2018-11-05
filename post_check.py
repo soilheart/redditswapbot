@@ -21,11 +21,12 @@ class PostChecker(object):
     """ Post check helper """
 
     def __init__(self, config, db_con, post_categories, locations):
-        self._config = config
+        self._config = config["post_check"]
         self._user_db_con = db_con
         self._user_db_cursor = self._user_db_con.cursor()
         self._post_categories = post_categories
         self._locations = locations
+        self._rules_uri = config["subreddit"]["uri"] + config["post_check"]["rules"]
 
     def _get_user_db_entry(self, post):
         self._user_db_cursor.execute('SELECT username, last_id, last_created as "last_created [timestamp]" '
@@ -60,17 +61,15 @@ class PostChecker(object):
             primary = "OTHER"
             secondary = location
 
-        if primary not in self._locations:
-            print(primary, " not in ", self._locations.keys())
-            return False
-
-        if secondary not in self._locations[primary]:
-            print(secondary, " not in ", primary)
+        if (primary not in self._locations or
+                secondary not in self._locations[primary]):
+            self.remove_post(post, "location")
             return False
 
         timestamp_check = False
         post_category = self._config["default_category"]
-        for category, category_prop in self._post_categories["personal"].items():
+        personal_categories = self._post_categories["personal"]
+        for category, category_prop in personal_categories.items():
             assert not ("have" in category_prop and "want" in category_prop), "Limitation of script"
             if "want" in category_prop:
                 regex = category_prop["want"].replace("\\\\", "\\")
@@ -82,14 +81,15 @@ class PostChecker(object):
                 if re.search(regex, have, re.IGNORECASE):
                     post_category = category
                     timestamp_check = category_prop["timestamp_check"]
-        print(clean_title, " categoryed as ", post_category)
+        post.mod.flair(text=post_category, css_class=personal_categories[post_category]["class"])
 
         self.check_repost(post)
 
         if timestamp_check:
-            print("Checking for timestamps")
             if not re.search(self._config["timestamp_regex"], post.selftext, re.IGNORECASE):
                 post.report("Could not find timestamp...")
+
+        self.post_comment(post)
 
         return True
 
@@ -100,13 +100,16 @@ class PostChecker(object):
 
         for category, category_prop in self._post_categories["nonpersonal"].items():
             if tag == category_prop["tag"]:
-                print(tag, " matches ", category)
                 if "required_flair" in category_prop:
                     if category_prop["required_flair"] != post.author_category_css_class:
-                        print("User not having the expected category ", category_prop["required_flair"])
-                        return False
+                        # TODO: Remove from automod and add reply here
+                        pass
+                post.mod.flair(text=category, css_class=category_prop["class"])
+                if category_prop.get("reply", True):
+                    self.post_comment(post)
                 return True
-        print("Bad tag ", tag)
+
+        self.remove_post(post, "tag")
         return False
 
     def check_post(self, post):
@@ -116,32 +119,73 @@ class PostChecker(object):
 
         clean_title = unicodedata.normalize('NFKD', post.title).encode('ascii', 'ignore')
 
-        print("#"*20 + clean_title)
-
         if self._is_personal_post(clean_title):
             if "trade_post_format_strict" in self._config:
                 if not bool(re.match(self._config["trade_post_format_strict"], clean_title)):
-                    print("!"*80)
-                    print(clean_title, " failed strict check")
+                    self.remove_post(post, "title")
                     return
 
             if not self.check_and_flair_personal(post, clean_title):
-                print("!"*80)
                 return
 
         elif self._is_nonpersonal_post(clean_title):
             # TODO: Add strict format check (not necessary at the moment)
-
             if not self.check_and_flair_nonpersonal(post, clean_title):
-                print("!"*80)
                 return
 
         else:
-            print(clean_title, " did not match any format")
-            print("!"*80)
+            self.remove_post(post)
             return
 
-        print("Post looks fine! Commenting")
+    def remove_post(self, post, bad_part=None):
+        """
+        Reply and remove post
+        """
+
+        comment = "REMOVED: Your post was automatically removed due to an incorrect title."
+        if bad_part is not None:
+            comment += "\n\nYour **{bad_part}** does not match the format specified in the [RULES]({rules_uri}).".format(
+                bad_part=bad_part, rules_uri=self._rules_uri)
+        post.reply(comment).mod.distinguish()
+        post.mod.remove()
+
+    def post_comment(self, post):
+        """
+        Post user info comment
+        """
+
+        age = str(datetime.utcfromtimestamp(post.author.created_utc))
+
+        try:
+            reputation = int(post.author_flair_css_class.lstrip('i-'))
+        except AttributeError:
+            reputation = 0
+        except ValueError:
+            reputation = post.author_flair_css_class.lstrip('i-')
+
+        comment = "* Username: /u/{0}\n".format(str(post.author.name))
+        comment += "* Join date: {0}\n".format(age)
+        comment += "* Link karma: {0}\n".format(str(post.author.link_karma))
+        comment += "* Comment karma: {0}\n".format(str(post.author.comment_karma))
+        if isinstance(reputation, int):
+            comment += "* Reputation: {0} trade(s)\n".format(reputation)
+        else:
+            comment += "* Reputation: User is currently a {}.\n".format(reputation)
+        # TODO: Distinguish between normal flair and other flairs
+        if post.author_flair_text is not None:
+            if isinstance(reputation, int):
+                name = "Heatware"
+            else:
+                name = "Link"
+            link = "[" + str(post.author_flair_text) + "](" + str(post.author_flair_text) + ")"
+            comment += "* {0}: {1} \n".format(name, link)
+        comment += ("\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. "
+                    "^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have "
+                    "^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. "
+                    "^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the "
+                    "^^[RULES](https://www.reddit.com/r/{0}/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the "
+                    "^^[WIKI](https://www.reddit.com/r/{0}/wiki/index)").format("mechmarket")
+        post.reply(comment).mod.distinguish()
 
     def check_repost(self, post):
         """
@@ -183,7 +227,7 @@ def main():
         user_db = subreddit.config["trade"]["user_db"]
         db_con = sqlite3.connect(user_db, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         db_con.row_factory = sqlite3.Row
-        post_checker = PostChecker(subreddit.config["post_check"], db_con, post_categories, locations)
+        post_checker = PostChecker(subreddit.config, db_con, post_categories, locations)
     except Exception as exception:
         LOGGER.error(exception)
         sys.exit()
