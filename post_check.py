@@ -26,7 +26,8 @@ class PostChecker(object):
         self._user_db_cursor = self._user_db_con.cursor()
         self._post_categories = post_categories
         self._locations = locations
-        self._rules_uri = config["subreddit"]["uri"] + config["post_check"]["rules"]
+        self._rules_uri = "/r/{subreddit}{rules}".format(subreddit=config["subreddit"]["uri"],
+                                                         rules=config["post_check"]["rules"])
 
     def _get_user_db_entry(self, post):
         self._user_db_cursor.execute('SELECT username, last_id, last_created as "last_created [timestamp]" '
