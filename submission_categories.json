@@ -1,59 +1,48 @@
 {
-    "personal":
-    [
-	{
+    "personal": {
+	"Selling": {
 	    "want": "(cash|paypal|\\$|google w|money)",
-	    "name": "Selling",
 	    "class": "selling",
 	    "timestamp_check": true
 	},
-	{
+	"Buying": {
 	    "have": "(cash|paypal|\\$|google w|money)",
-	    "name": "Buying",
 	    "class": "buying",
 	    "timestamp_check": false
 	},
-	{
+	"Trading": {
 	    "want": "(trade)",
-	    "name": "Trading",
 	    "class": "trading",
 	    "timestamp_check": true
 	}
-    ],
-    "nonpersonal":
-    [
-	{
+    },
+    "nonpersonal": {
+	"META": {
 	    "tag": "META",
-	    "name": "META",
 	    "class": "meta",
 	    "required_flair": "i-mod",
 	    "no_reply": true
 	},
-	{
+	"Interest Check": {
 	    "tag": "IC",
-	    "name": "Interest Check",
 	    "class": "interestcheck"
 	},
-	{
+	"Group Buy": {
 	    "tag": "GB",
-	    "name": "Group Buy",
 	    "class": "groupbuy"
 	},
-	{
+	"Artisan": {
 	    "tag": "Artisan",
-	    "name": "Artisan",
 	    "class": "artisan"
 	},
-	{
+	"Vendor": {
 	    "tag": "Vendor",
-	    "name": "Vendor",
 	    "class": "vendor",
 	    "required_flair": "i-vendor"
 	},
-	{
+	"Service": {
 	    "tag": "Service",
-	    "name": "Service",
 	    "class": "service"
 	}
-    ]
+    }
 }

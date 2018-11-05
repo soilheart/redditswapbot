@@ -69,23 +69,20 @@ class PostChecker(object):
             return False
 
         timestamp_check = False
-        flair_class = self._config["default_flair_class"]
-        for category in self._post_categories["personal"]:
-            if "want" in category:
-                assert "have" not in category, "Limitation of script"
-                regex = category["want"].replace("\\\\", "\\")
+        post_category = self._config["default_category"]
+        for category, category_prop in self._post_categories["personal"].items():
+            assert not ("have" in category_prop and "want" in category_prop), "Limitation of script"
+            if "want" in category_prop:
+                regex = category_prop["want"].replace("\\\\", "\\")
                 if re.search(regex, want, re.IGNORECASE):
-                    print(want, "matches", category["name"])
-                    flair_class = category["class"]
-                    timestamp_check = category["timestamp_check"]
-            if "have" in category:
-                assert "want" not in category, "Limitation of script"
-                regex = category["have"].replace("\\\\", "\\")
+                    post_category = category
+                    timestamp_check = category_prop["timestamp_check"]
+            if "have" in category_prop:
+                regex = category_prop["have"].replace("\\\\", "\\")
                 if re.search(regex, have, re.IGNORECASE):
-                    print(have, "matches", category["name"])
-                    flair_class = category["class"]
-                    timestamp_check = category["timestamp_check"]
-        print(clean_title, " flaired as ", flair_class)
+                    post_category = category
+                    timestamp_check = category_prop["timestamp_check"]
+        print(clean_title, " categoryed as ", post_category)
 
         self.check_repost(post)
 
@@ -101,12 +98,12 @@ class PostChecker(object):
 
         tag = re.search(self._config["informational_post_format"], clean_title).group(1)
 
-        for category in self._post_categories["nonpersonal"]:
-            if tag == category["tag"]:
-                print(tag, " matches ", category["name"])
-                if "required_flair" in category:
-                    if category["required_flair"] != post.author_flair_css_class:
-                        print("User not having the expected flair ", category["required_flair"])
+        for category, category_prop in self._post_categories["nonpersonal"].items():
+            if tag == category_prop["tag"]:
+                print(tag, " matches ", category)
+                if "required_flair" in category_prop:
+                    if category_prop["required_flair"] != post.author_category_css_class:
+                        print("User not having the expected category ", category_prop["required_flair"])
                         return False
                 return True
         print("Bad tag ", tag)

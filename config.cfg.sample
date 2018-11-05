@@ -45,8 +45,8 @@ trade_post_format_strict = ^\[[A-Z-]{2,}\] ?\[H\][^\[\]]*\[W\][^\[\]]*
 informational_post_format = ^\[([^\[\]]*)\][^\[\]]*$
 # Regex for checking for timestamps
 timestamp_regex = http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%%[0-9a-fA-F][0-9a-fA-F]))+
-# Default css_class for trade posts
-default_flair_class = trading
+# Default category for personal posts
+default_category = Trading
 rules = /wiki/rules/rules
 upper_hour = 24
 lower_min = 5
