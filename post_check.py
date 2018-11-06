@@ -102,7 +102,7 @@ class PostChecker(object):
         for category, category_prop in self._post_categories["nonpersonal"].items():
             if tag == category_prop["tag"]:
                 if "required_flair" in category_prop:
-                    if category_prop["required_flair"] != post.author_category_css_class:
+                    if category_prop["required_flair"] != post.author_flair_css_class:
                         # TODO: Remove from automod and add reply here
                         pass
                 post.mod.flair(text=category, css_class=category_prop["class"])

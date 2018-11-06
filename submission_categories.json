@@ -43,6 +43,10 @@
 	"Service": {
 	    "tag": "Service",
 	    "class": "service"
+	},
+	"Giveaway": {
+	    "tag": "Giveaway",
+	    "class": "giveaway"
 	}
     }
 }
