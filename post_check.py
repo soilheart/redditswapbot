@@ -20,14 +20,15 @@ LOGGER = LoggerManager().getLogger("post_check")
 class PostChecker(object):
     """ Post check helper """
 
-    def __init__(self, config, db_con, post_categories, locations):
-        self._config = config["post_check"]
+    def __init__(self, subreddit, db_con, post_categories, locations):
+        self._subreddit = subreddit
+        self._config = subreddit.config["post_check"]
         self._user_db_con = db_con
         self._user_db_cursor = self._user_db_con.cursor()
         self._post_categories = post_categories
         self._locations = locations
-        self._rules_uri = "/r/{subreddit}{rules}".format(subreddit=config["subreddit"]["uri"],
-                                                         rules=config["post_check"]["rules"])
+        self._rules_uri = "/r/{subreddit}{rules}".format(subreddit=subreddit.config["subreddit"]["uri"],
+                                                         rules=subreddit.config["post_check"]["rules"])
 
     def _get_user_db_entry(self, post):
         self._user_db_cursor.execute('SELECT username, last_id, last_created as "last_created [timestamp]" '
@@ -143,6 +144,11 @@ class PostChecker(object):
         Reply and remove post
         """
 
+        # TODO: Implement this in a better way
+        if post.author in self._subreddit.get_mods():
+            # Let mods make posts with arbitrary tags
+            return
+
         comment = "REMOVED: Your post was automatically removed due to an incorrect title."
         if bad_part is not None:
             comment += "\n\nYour **{bad_part}** does not match the format specified in the [RULES]({rules_uri}).".format(
@@ -228,7 +234,7 @@ def main():
         user_db = subreddit.config["trade"]["user_db"]
         db_con = sqlite3.connect(user_db, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         db_con.row_factory = sqlite3.Row
-        post_checker = PostChecker(subreddit.config, db_con, post_categories, locations)
+        post_checker = PostChecker(subreddit, db_con, post_categories, locations)
     except Exception as exception:
         LOGGER.error(exception)
         sys.exit()
