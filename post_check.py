@@ -139,7 +139,7 @@ class PostChecker(object):
             self.remove_post(post)
             return
 
-    def remove_post(self, post, bad_part=None):
+    def remove_post(self, post, bad_part="title"):
         """
         Reply and remove post
         """
@@ -150,9 +150,8 @@ class PostChecker(object):
             return
 
         comment = "REMOVED: Your post was automatically removed due to an incorrect title."
-        if bad_part is not None:
-            comment += "\n\nYour **{bad_part}** does not match the format specified in the [RULES]({rules_uri}).".format(
-                bad_part=bad_part, rules_uri=self._rules_uri)
+        comment += "\n\nYour **{bad_part}** does not match the format specified in the [RULES]({rules_uri}).".format(
+            bad_part=bad_part, rules_uri=self._rules_uri)
         post.reply(comment).mod.distinguish()
         post.mod.remove()
 
