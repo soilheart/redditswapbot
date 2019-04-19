@@ -1,268 +1,286 @@
 #!/usr/bin/env python2
 
-import sys, os
 import re
-import ast
-import praw
-import sqlite3
-import datetime
-from ConfigParser import SafeConfigParser
-from datetime import datetime, timedelta
-from time import sleep, time
-from log_conf import LoggerManager
 import argparse
-# determine curr or prev month
-parser = argparse.ArgumentParser(description="Process flairs")
-parser.add_argument("-m", action="store", dest="month", default="curr", help="curr or prev month? (default: curr)")
-results = parser.parse_args()
-conf_link_id = 'link_id'
-if results.month == "prev":
-    conf_link_id = 'prevlink_id'
+from datetime import datetime
 
-# load config file
-containing_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
-cfg_file = SafeConfigParser()
-path_to_cfg = os.path.join(containing_dir, 'config.cfg')
-cfg_file.read(path_to_cfg)
-username = cfg_file.get('reddit', 'username')
-password = cfg_file.get('reddit', 'password')
-app_key = cfg_file.get('reddit', 'app_key')
-app_secret = cfg_file.get('reddit', 'app_secret')
-subreddit = cfg_file.get('reddit', 'subreddit')
-link_id = cfg_file.get('trade', conf_link_id)
-equal_warning = cfg_file.get('trade', 'equal')
-age_warning = cfg_file.get('trade', 'age')
-karma_warning = cfg_file.get('trade', 'karma')
-dev_warning = cfg_file.get('trade', 'dev')
-reply = cfg_file.get('trade', 'reply')
-age_check = cfg_file.getint('trade', 'age_check')
-karma_check = cfg_file.getint('trade', 'karma_check')
-flair_db = cfg_file.get('trade', 'flair_db')
-flair_dev = cfg_file.getint('trade', 'flair_dev')
-notrade_flairclass = ast.literal_eval(cfg_file.get('trade', 'notrade_flairclass'))
+from log_conf import LoggerManager
+from common import SubRedditMod
 
 # Configure logging
-logger = LoggerManager().getLogger(__name__)
+LOGGER = LoggerManager().getLogger("trade_flair")
+
+
+class TradeFlairer(object):
+    """ Trade flair helper """
+
+    def __init__(self, subreddit, logger):
+        self._subreddit = subreddit
+        self._config = subreddit.config["trade"]
+        self.completed = []
+        self.pending = []
+        self._trade_count_cache = {}
+        self._current_submission = None
+        self._logger = logger
+
+    def open_submission(self, submission):
+        if submission == "curr":
+            submission = self._config["link_id"]
+        elif submission == "prev":
+            submission = self._config["prevlink_id"]
+        self._current_submission = submission
+
+        self._logger.info("Opening trade confirmation submission {id}".format(id=submission))
+
+        with open(submission + "_completed.log", "a+") as completed_file:
+            self.completed = completed_file.read().splitlines()
+
+        with open(submission + "_pending.log", "a+") as pending_file:
+            self.pending = pending_file.read().splitlines()
+
+    def close_submission(self):
+        assert self._current_submission
+        if self.pending:
+            with open(self._current_submission + "_pending.log", "w") as pending_file:
+                pending_file.write("\n".join(self.pending))
+        self._current_submission = None
+
+    def add_completed(self, comment):
+        assert self._current_submission
+        self.completed.append(comment.id)
+        with open(self._current_submission + "_completed.log", "a") as completed_file:
+            completed_file.write("{id}\n".format(id=comment.id))
+
+    def add_pending(self, comment):
+        assert self._current_submission
+        self.pending.append(comment.id)
+
+    def remove_pending(self, comment):
+        assert self._current_submission
+        self.pending.remove(comment.id)
+
+    def get_unhandled_comments(self):
+        assert self._current_submission
+        comments = self._subreddit.get_top_level_comments(self._current_submission)
+        handled = self.completed + self.pending
+        unhandled = [comment for comment in comments if comment.id not in handled]
+        self._logger.info("Checking {unhandled} out of {total} comments ({pending} pending)"
+                          .format(unhandled=len(unhandled), total=len(comments),
+                                  pending=len(self.pending)))
+        return unhandled
+
+    def check_top_level_comment(self, comment):
+        bot_reply = self._subreddit.check_bot_reply(comment)
+
+        explicit_link = re.search(r"\[.*\]\(.*\)", comment.body)
+        match = re.findall(r"\/?u(?:ser)?\/([a-zA-Z0-9_-]+)", comment.body)
+
+        if explicit_link or not match:
+            # reply
+            if not bot_reply:
+                # comment.reply("Could not find user mention, "
+                # "please edit your comment and make sure the username "
+                # "starts with /u/ (no explicit linking!)")
+                print("Could not find user mention, "
+                      "please edit your comment and make sure the username "
+                      "starts with /u/ (no explicit linking!)")
+                print(comment.body)
+            return None
+
+        match = {user.lower() for user in match}
+        if len(match) > 1:
+            if not bot_reply:
+                # comment.reply("Found multiple usernames, "
+                # "please only include one user per confirmation comment")
+                print("Found multiple usernames, "
+                      "please only include one user per confirmation comment")
+                print(comment.body)
+            return None
+
+        if bot_reply:
+            print("remove " + bot_reply.body)
+            # bot_reply.mod.remove()
+
+        return match.pop()
+
+    def check_reply(self, comment):
+        bot_reply = self._subreddit.check_bot_reply(comment)
+        if "confirmed" not in comment.body.lower():
+            if not bot_reply:
+                # comment.reply('Could not find "confirmed" in comment, please edit your comment')
+                print('Could not find "confirmed" in comment, please edit your comment')
+                print(comment.body)
+            return False
+
+        if bot_reply:
+            print("remove " + bot_reply.body)
+            # bot_reply.mod.remove()
+
+        return True
+
+    def _get_warning(self, comment, warning_type):
+        # TODO: Move proof to config
+        proofs = ["Screenshot of PM's between the users"]
+        modmail_content = ("Comment link: {link}\n\nLink to screenshots of PM's: [REQUIRED]"
+                           .format(link=comment.permalink))
+        modmail_link = self._subreddit.get_modmail_link(subject="Trade Confirmation Proof",
+                                                        content=modmail_content)
+        warning = self._config["{type}_warning".format(type=warning_type)] + "\n\n"
+        warning += ("To verify this trade send a {modmail_link} including the following: \n\n"
+                    .format(modmail_link=modmail_link))
+        for proof in proofs:
+            warning += "* {proof}\n".format(proof=proof)
+        return warning
+
+    def check_requirements(self, parent, reply):
+        for comment in [parent, reply]:
+            if self._subreddit.check_user_suspended(comment.author):
+                return False
+            if comment.banned_by:
+                # comment.report("Flair: Banned user")
+                return False
+
+            karma = comment.author.link_karma + comment.author.comment_karma
+            age = (datetime.utcnow() - datetime.utcfromtimestamp(comment.author.created_utc)).days
+            trade_count = self.get_author_trade_count(comment)
+
+            if trade_count is not None and trade_count < self._config["flair_check"]:
+                if age < self._config["age_check"]:
+                    # comment.report("Flair: Account age")
+                    print(self._get_warning(comment, "karma"))
+                    return False
+                if karma < self._config["karma_check"]:
+                    # comment.report("Flair: Account karma")
+                    print(self._get_warning(comment, "karma"))
+                    return False
+
+        return True
+
+    def get_author_trade_count(self, item):
+        if item.author.name in self._trade_count_cache:
+            return self._trade_count_cache[item.author.name]
+        if not item.author_flair_css_class:
+            return 0
+
+        trade_count = item.author_flair_css_class.lstrip("i-")
+        try:
+            trade_count = int(trade_count)
+        except ValueError:
+            trade_count = None
+        return trade_count
+
+    def flair(self, parent, reply):
+        for comment in parent, reply:
+            trade_count = self.get_author_trade_count(comment)
+            if trade_count is not None:
+                trade_count += 1
+                new_flair_css_class = "i-{trade_count}".format(trade_count=trade_count)
+                self._subreddit.update_comment_user_flair(comment, css_class=new_flair_css_class)
+                self._trade_count_cache[comment.author.name] = trade_count
+        reply.reply(self._config["reply"])
+
 
 def main():
 
-    def conditions():
-        if not hasattr(comment.author, 'name'):
-            return False
-        if 'confirm' not in comment.body.lower():
-            return False
-        if comment.author.name == username:
-            return False
-        if comment.is_root is True:
-            return False
-        if comment.banned_by:
-            return False
-        return True
+    parser = argparse.ArgumentParser(description="Process flairs")
+    parser.add_argument("-m", action="store", dest="post", default="curr",
+                        help="Which trade post to process (curr, prev or submission id)")
+    args = parser.parse_args()
 
-    def check_self_reply(comment, parent):
-        if comment.author.name == parent.author.name:
-            if equal_warning:
-                comment.reply(equal_warning)
-            comment.report('Flair: Self Reply')
-            parent.report('Flair: Self Reply')
-            save()
-            return False
-        return True
+    # try:
+    if True:
+        # Setup SubRedditMod
+        subreddit = SubRedditMod(LOGGER)
 
-    def verify(item):
-        karma = item.author.link_karma + item.author.comment_karma
-        age = (datetime.utcnow() - datetime.utcfromtimestamp(item.author.created_utc)).days
+        # Setup tradeflairer
+        trade_flairer = TradeFlairer(subreddit, LOGGER)
 
-        curs.execute('''SELECT * FROM flair WHERE username=?''', (item.author.name,))
+        trade_flairer.open_submission(args.post)
 
-        row = curs.fetchone()
-
-        if row is not None:
-            if not item.author_flair_css_class:
-                item.author_flair_css_class = 0
-            if not row['flair_css_class']:
-                db_flair_css_class = 0
-            if item.author_flair_css_class in notrade_flairclass:
-                return True
-            if (int(item.author_flair_css_class or 0) > (int(row['flair_css_class'] or 0) + int(flair_dev))) or (int(item.author_flair_css_class or 0) < (int(row['flair_css_class'] or 0) - int(flair_dev))):
-                logger.info('Rechecking deviation: ' + item.author.name)
-                second_chance = next(r.subreddit(subreddit).flair(item.author.name))
-                if second_chance['flair_css_class'] == item.author_flair_css_class:
-                    item.report('Flair: Deviation between DB and Reddit')
-                    if dev_warning:
-                        item.reply(dev_warning)
-                    r.subreddit(subreddit).message('Flair Devation Detected', 'User: /u/' + item.author.name + '\n\nDB: ' + str(row['flair_css_class']) + '\n\nReddit: ' + str(item.author_flair_css_class))
-                    logger.info('Flair Deviation - User: ' + item.author.name + ', DB: ' + str(row['flair_css_class']) + ', Reddit: ' + str(item.author_flair_css_class))
-                    save()
-                    return True
-
-        if item.author_flair_css_class < 1:
-            if age < age_check:
-                item.report('Flair: Account Age')
-                if age_warning:
-                    item.reply(age_warning)
-                save()
-                return False
-            if karma < karma_check:
-                item.report('Flair: Account Karma')
-                if karma_warning:
-                    item.reply(karma_warning)
-                save()
-                return False
-        return True
-
-    def values(item):
-        if not item.author_flair_css_class:
-            logger.info('Rechecking empty flair: ' + item.author.name)
-            second_chance = next(r.subreddit(subreddit).flair(item.author.name))
-            if second_chance['flair_css_class'] == item.author_flair_css_class:
-                item.author_flair_css_class = '1'
-            else:
-                item.author_flair_css_class = str(int(item.author_flair_css_class or 0) + 1)
-        elif (item.author_flair_css_class and (item.author_flair_css_class in notrade_flairclass)):
-            pass
-        else:
-            item.author_flair_css_class = str(int(item.author_flair_css_class) + 1)
-        if not item.author_flair_text:
-            item.author_flair_text = ''
-
-    def flair(item):
-        if item.author_flair_css_class not in notrade_flairclass:
-            # Set flair in subreddit
-            r.subreddit(subreddit).flair.set(item.author, item.author_flair_text, item.author_flair_css_class)
-            logger.info('Set ' + item.author.name + '\'s flair to ' + item.author_flair_css_class)
-            # Set flair in database
-            curs.execute('''UPDATE OR IGNORE flair SET flair_text=?, flair_css_class=? WHERE username=?''', (item.author_flair_text, item.author_flair_css_class, item.author.name, ))
-            curs.execute('''INSERT OR IGNORE INTO flair (username, flair_text, flair_css_class) VALUES (?, ?, ?)''', (item.author.name, item.author_flair_text, item.author_flair_css_class, ))
-            con.commit()
-
-        for com in flat_comments:
-            if hasattr(com.author, 'name'):
-                if com.author.name == item.author.name:
-                    com.author_flair_css_class = item.author_flair_css_class
-
-    def save():
-        with open(link_id + ".log", 'a') as myfile:
-                myfile.write('%s\n' % comment.id)
-
-    try:
-        # Load old comments
-        with open(link_id + ".log", 'a+') as myfile:
-            completed = myfile.read()
-
-        try:
-            con = sqlite3.connect(flair_db)
-            con.row_factory = sqlite3.Row
-        except sqlite3.Error, e:
-            logger.exception("Error %s:" % e.args[0])
-
-        curs = con.cursor()
-
-        # Log in
-        logger.debug('Logging in as /u/' + username)
-        r = praw.Reddit(client_id=app_key,
-                        client_secret=app_secret,
-                        username=username,
-                        password=password,
-                        user_agent=username)
-
-        mods = r.subreddit(subreddit).moderator()
-
-        # Get the submission and the comments
-        logger.info('Starting to grab comments')
-        submission = r.submission(id=link_id)
-        submission.comments.replace_more(limit=None, threshold=0)
-        flat_comments = submission.comments.list()
-
-        logger.info('Finished grabbing comments')
-
-        for comment in flat_comments:
-            if not hasattr(comment, 'author'):
-                continue
-            if comment.id in completed:
-                continue
-            if not conditions():
-                continue
-            parent = [com for com in flat_comments if com.fullname == comment.parent_id][0]
-            if not hasattr(parent.author, 'link_karma'):
-                continue
-            if not check_self_reply(comment, parent):
+        for comment in trade_flairer.get_unhandled_comments():
+            if not hasattr(comment.author, 'name'):
+                # Deleted comment, ignore comment and move on
+                trade_flairer.add_completed(comment)
                 continue
 
-            if not comment.author.name.lower() in parent.body.lower():
+            tagged_user = trade_flairer.check_top_level_comment(comment)
+            if tagged_user is None:
                 continue
+            elif tagged_user.lower() == comment.author.name.lower():
+                # comment.report("Flair: Self-tagging")
+                print("Self-tagging")
 
-            # Check Account Age, Karma, and Flair Deviation
-            logger.debug('Verifying comment id: ' + comment.id + ' and parent id: ' + parent.id)
-            if not verify(comment):
-                continue
-            if not verify(parent):
-                continue
-
-            # Get Future Values to Flair
-            values(comment)
-            values(parent)
-
-            # Flairs up in here
-            flair(comment)
-            flair(parent)
-            if reply:
-                comment.reply(reply)
-            save()
-
-        for msg in r.inbox.unread(limit=None):
-            if not msg.was_comment:
-                if msg.author in mods:
-                    logger.info('Processing PM from mod: ' + msg.author.name)
-                    mod_link = re.search('^(https?:\/\/(?:www\.)?reddit\.com\/r\/.*\/comments\/.{6}\/.*\/.{7}\/)$', msg.body)
-                    if not mod_link:
-                        msg.reply('You have submitted an invalid URL')
-                        msg.mark_as_read()
+            for reply in comment.replies:
+                if not hasattr(reply.author, 'name'):
+                    # Deleted comment, ignore comment and move on
+                    continue
+                if reply.author.name.lower() == tagged_user.lower():
+                    if not trade_flairer.check_reply(reply):
                         continue
+
+                    if trade_flairer.check_requirements(comment, reply):
+                        # trade_flairer.flair(comment, reply)
+                        print("Added")
+                        trade_flairer.add_completed(comment)
                     else:
-                        match = re.search(r'[^/]+(?=\/$|$)', msg.body)
-                        check_id = match.group(0)
-                        tocheck = r.comment(id=check_id).refresh()
-                        flat_comments = tocheck.replies.list()
-                        for comment in flat_comments:
-                            if not hasattr(comment, 'author'):
-                                continue
-                            if comment.mod_reports:
-                                comment.mod.approve()
-                            if comment.author.name == username:
-                                comment.mod.remove()
-                                continue
-
-                            if parent.mod_reports:
-                                parent.mod.approve()
-
-                            parent = tocheck
-
-                            logger.info('Mod - Verifying comment id: ' + comment.id + ' and parent id: ' + parent.id)
-
-                            if not conditions():
-                                continue
-                            if not hasattr(parent.author, 'link_karma'):
-                                continue
-
-                            values(comment)
-                            values(parent)
-
-                            flair(comment)
-                            flair(parent)
-                            if reply:
-                                comment.reply(reply)
-                            msg.reply('Trade flair added for ' + comment.author.name + ' and ' + parent.author.name)
-                            msg.mark_read()
+                        trade_flairer.add_pending(comment)
+                        print("Pending")
                 else:
-                    logger.info('Processing PM from user: ' + msg.author.name)
-                    msg.reply('[BEEP BOOP! I AM A BOT!](http://i.imgur.com/9dJ2quO.gif)')
+                    # TODO: Investigate if bot comment check is needed here
+                    # reply.report("User not tagged in parent")
+                    print("User not tagged in parent")
+
+        trade_flairer.close_submission()
+
+        for msg in subreddit.get_unread_mod_messages():
+            LOGGER.info("Processing PM from mod: " + msg.author.name)
+            pattern = r"^https?:\/\/(?:www\.)?reddit\.com\/r\/.*\/comments\/.{6}\/.*\/(.{7})\/$"
+            comment_link = re.search(pattern, msg.body)
+            if not comment_link:
+                msg.reply("You have submitted an invalid URL")
+                msg.mark_read()
+                continue
+
+            comment_id = comment_link.group(1)
+            # if comment_id not in trade_flairer.pending:
+            #     msg.reply("Could not find comment {id} in pending trade confirmations"
+            #               .format(id=comment_id))
+            #     msg.mark_read()
+            #     continue
+
+            comment = subreddit.praw_h.comment(id=comment_id).refresh()
+            tagged_user = trade_flairer.check_top_level_comment(comment)
+            if tagged_user is None:
+                msg.reply("Could not find tagged user, sure you submitted the top level comment?")
+                msg.mark_read()
+                continue
+
+            if comment.mod_reports:
+                comment.mod.approve()
+            for reply in comment.replies:
+                if reply.author.name.lower() == tagged_user.lower():
+                    if not trade_flairer.check_reply(reply):
+                        continue
+
+                    if reply.mod_reports:
+                        reply.mod.approve()
+                    trade_flairer.flair(comment, reply)
+                    trade_flairer.open_submission(comment.submission.id)
+                    trade_flairer.add_completed(comment)
+                    # trade_flairer.remove_pending(comment)
+                    trade_flairer.close_submission()
+                    msg.reply("Trade flair added for {comment} and {reply}"
+                              .format(comment=comment.author.name, reply=reply.author.name))
                     msg.mark_read()
+                    break
+            else:
+                msg.reply("Could not find confirmation reply on submitted comment")
+                msg.mark_read()
 
-        con.close()
+    # except Exception as exception:
+    #     LOGGER.error(exception)
+    #     sys.exit()
 
-    except Exception as e:
-        logger.error(e)
 
 if __name__ == '__main__':
     main()

@@ -2,6 +2,7 @@
 
 import sys
 import os
+import urllib
 
 from ConfigParser import SafeConfigParser
 
@@ -54,6 +55,16 @@ class SubRedditMod(object):
         login_info = self.config["login"]
         self.logger.info('Logging in as /u/' + login_info["username"])
         return praw.Reddit(**login_info)
+
+    def get_modmail_link(self, title="modmail", subject=None, content=None):
+        """ Get link to modmail """
+        link = ("https://www.reddit.com/message/compose?to=/r/{subreddit}"
+                .format(subreddit=self.config["subreddit"]["uri"]))
+        if subject:
+            link += "&subject=" + urllib.quote_plus(subject)
+        if content:
+            link += "&message=" + urllib.quote_plus(content)
+        return "[{title}]({link})".format(title=title, link=link)
 
     def get_unread_messages(self):
         """ Get unread messages (not comment replies) """
