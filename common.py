@@ -61,7 +61,7 @@ class SubRedditMod(object):
 
     def get_unread_mod_messages(self):
         """ Get undread messages from mods """
-        return [msg for msg in self.get_messages() if msg.author in self.get_mods()]
+        return [msg for msg in self.get_unread_messages() if msg.author in self.get_mods()]
 
     def get_top_level_comments(self, link_id):
         """ Get all top level comments on a submission with specified link_id """
