@@ -31,12 +31,14 @@ class SubRedditMod(object):
     """ Helper class to mod a subreddit """
 
     _mods = None
+    _suspended = {}
 
     def __init__(self, logger):
         self.logger = logger
         self.config = self._load_config()
         self.praw_h = self.login()
         self.subreddit = self.praw_h.subreddit(self.config["subreddit"]["uri"])
+        self.username = self.config["login"]["username"]
 
     @staticmethod
     def _load_config():
@@ -53,12 +55,23 @@ class SubRedditMod(object):
         self.logger.info('Logging in as /u/' + login_info["username"])
         return praw.Reddit(**login_info)
 
-    def get_all_comments(self, link_id):
-        """ Get all comments on a submission with specified link_id """
+    def get_unread_messages(self):
+        """ Get unread messages (not comment replies) """
+        return [msg for msg in self.praw_h.inbox.unread(limit=100) if not msg.was_comment]
+
+    def get_unread_mod_messages(self):
+        """ Get undread messages from mods """
+        return [msg for msg in self.get_messages() if msg.author in self.get_mods()]
+
+    def get_top_level_comments(self, link_id):
+        """ Get all top level comments on a submission with specified link_id """
         submission = self.praw_h.submission(id=link_id)
         submission.comments.replace_more(limit=None, threshold=0)
-        flat_comments = submission.comments.list()
-        return flat_comments
+        return submission.comments
+
+    def get_all_comments(self, link_id):
+        """ Get all comments on a submission with specified link_id """
+        return self.get_top_level_comments(link_id).list()
 
     def update_comment_user_flair(self, comment, css_class=None, text=None):
         """ Update the user flair of an author of a comment """
@@ -76,6 +89,16 @@ class SubRedditMod(object):
         """ Get new posts """
         return self.subreddit.new(limit=limit)
 
+    def _get_replies(self, item):
+        """ Get replies to submission or comment """
+        if isinstance(item, praw.models.reddit.submission.Submission):
+            comments = item.comments
+        elif isinstance(item, praw.models.reddit.comment.Comment):
+            comments = item.replies
+        else:
+            raise TypeError, "Unknown item type %s" % type(item)
+        return comments
+
     def get_mods(self):
         """ Cache mods """
         if self._mods is None:
@@ -84,14 +107,30 @@ class SubRedditMod(object):
 
     def check_mod_reply(self, item):
         """ Check if mod already has replied """
-        if isinstance(item, praw.models.reddit.submission.Submission):
-            comments = item.comments
-        elif isinstance(item, praw.models.reddit.comment.Comment):
-            comments = item.replies
-        else:
-            raise TypeError, "Unknown item type"
+        comments = self._get_replies(item)
 
         for comment in comments.list():
             if comment.author in self.get_mods():
                 return True
         return False
+
+    def check_bot_reply(self, item):
+        """ Check if bot has replied, if so return comment """
+        comments = self._get_replies(item)
+
+        for comment in comments.list():
+            if comment.author == self.username:
+                return comment
+        return None
+
+    def check_user_suspended(self, user):
+        """ Check if user is suspended/shadowbanned """
+        if user.name in self._suspended:
+            return self._suspended[user.name]
+
+        if hasattr(user, 'fullname'):
+            self._suspended[user.name] = False
+            return False
+
+        self._suspended[user.name] = True
+        return True
