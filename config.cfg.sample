@@ -45,8 +45,10 @@ timestamp_regex = http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%%[0-9a-
 # Default category for personal posts
 default_category = Trading
 rules = /wiki/rules/rules
+# The minimum hours between submissions as per the rules of the sub
 upper_hour = 24
-lower_min = 5
+# Grace period during which an user may delete and repost before the next submission is considered as a repost
+lower_min = 15
 
 [price]
 link_id = PRICE_CHECK_POST_LINK_ID

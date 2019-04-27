@@ -206,10 +206,18 @@ class PostChecker(object):
                 LOGGER.info("Checking post {} for repost violation".format(post.id))
                 post_created = datetime.utcfromtimestamp(post.created_utc)
                 seconds_between_posts = (post_created - last_created).total_seconds()
-                if (seconds_between_posts < int(self._config["upper_hour"]) * 3600 and
-                        seconds_between_posts > int(self._config["lower_min"]) * 60):
-                    LOGGER.info("Reported because seconds between posts: {}".format(seconds_between_posts))
+                if (seconds_between_posts < int(self._config["lower_min"]) * 60 and
+                        self._subreddit.is_removed(last_id)):
+                    LOGGER.info("Repost not reported because grace period. "
+                                "(Previous submission: https://redd.it/{})".format(last_id))
+                elif seconds_between_posts < int(self._config["upper_hour"]) * 3600:
+                    LOGGER.info("Repost reported for repost violation. "
+                                "(Previous submission: https://redd.it/{})".format(last_id))
                     post.report("Possible repost: https://redd.it/{}".format(last_id))
+                    post.reply("Your submission has been flagged for possible violation of the repost rules. ",
+                               "A mod will review your submission as soon as possible "
+                               "and approve the post if this was made in mistake.\n\n"
+                               "Previous post: https://redd.it/{})".format(last_id))
                     return
             self._update_user_db(post)
         else:

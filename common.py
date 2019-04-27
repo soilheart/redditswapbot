@@ -33,13 +33,21 @@ class SubRedditMod(object):
 
     _mods = None
     _suspended = {}
+    _removed = {}
 
     def __init__(self, logger):
         self.logger = logger
         self.config = self._load_config()
         self.praw_h = self.login()
         self.subreddit = self.praw_h.subreddit(self.config["subreddit"]["uri"])
-        self.username = self.config["login"]["username"]
+
+    @property
+    def subreddit_uri(self):
+        return self.config["subreddit"]["uri"]
+
+    @property
+    def username(self):
+        return self.config["login"]["username"]
 
     @staticmethod
     def _load_config():
@@ -59,7 +67,7 @@ class SubRedditMod(object):
     def get_modmail_link(self, title="modmail", subject=None, content=None):
         """ Get link to modmail """
         link = ("https://www.reddit.com/message/compose?to=/r/{subreddit}"
-                .format(subreddit=self.config["subreddit"]["uri"]))
+                .format(subreddit=self.subreddit_uri))
         if subject:
             link += "&subject=" + urllib.quote_plus(subject)
         if content:
@@ -73,6 +81,16 @@ class SubRedditMod(object):
     def get_unread_mod_messages(self):
         """ Get undread messages from mods """
         return [msg for msg in self.get_unread_messages() if msg.author in self.get_mods()]
+
+    def is_removed(self, submission_id):
+        """ Returns if the submission with submission_id is removed (by mod or user) """
+        if submission_id in self._removed:
+            return self._removed[submission_id]
+
+        submission = self.praw_h.submission(id=submission_id)
+        removed = submission.removed or (submission.author is None)
+        self._removed[submission_id] = removed
+        return removed
 
     def get_top_level_comments(self, link_id):
         """ Get all top level comments on a submission with specified link_id """
