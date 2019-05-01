@@ -234,15 +234,17 @@ def main():
 
             comment = subreddit.praw_h.comment(id=comment_id).refresh()
             tagged_user = trade_flairer.check_top_level_comment(comment)
-            if tagged_user is None:
-                msg.reply("Could not find tagged user, sure you submitted the top level comment?")
+            # if tagged_user is None:
+            if not "u/" in comment.body.lower():
+                msg.reply("Could not find /u/[user] in comment, sure you submitted the top level comment?")
                 msg.mark_read()
                 continue
 
             if comment.mod_reports:
                 comment.mod.approve()
             for reply in comment.replies:
-                if reply.author.name.lower() == tagged_user.lower():
+                # if reply.author.name.lower() == tagged_user.lower():
+                if reply.author.name.lower() in comment.body.lower():
                     if not trade_flairer.check_reply(reply):
                         continue
 
