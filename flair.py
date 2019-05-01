@@ -76,30 +76,21 @@ class TradeFlairer(object):
         match = re.findall(r"\/?u(?:ser)?\/([a-zA-Z0-9_-]+)", comment.body)
 
         if explicit_link or not match:
-            # reply
             if not bot_reply:
-                # comment.reply("Could not find user mention, "
-                # "please edit your comment and make sure the username "
-                # "starts with /u/ (no explicit linking!)")
-                print("Could not find user mention, "
-                      "please edit your comment and make sure the username "
-                      "starts with /u/ (no explicit linking!)")
-                print(comment.body)
+                comment.reply("Could not find user mention, "
+                              "please edit your comment and make sure the username "
+                              "starts with /u/ (no explicit linking!)")
             return None
 
         match = {user.lower() for user in match}
         if len(match) > 1:
             if not bot_reply:
-                # comment.reply("Found multiple usernames, "
-                # "please only include one user per confirmation comment")
-                print("Found multiple usernames, "
-                      "please only include one user per confirmation comment")
-                print(comment.body)
+                comment.reply("Found multiple usernames, "
+                              "please only include one user per confirmation comment")
             return None
 
         if bot_reply:
-            print("remove " + bot_reply.body)
-            # bot_reply.mod.remove()
+            bot_reply.mod.remove()
 
         return match.pop()
 
@@ -107,14 +98,11 @@ class TradeFlairer(object):
         bot_reply = self._subreddit.check_bot_reply(comment)
         if "confirmed" not in comment.body.lower():
             if not bot_reply:
-                # comment.reply('Could not find "confirmed" in comment, please edit your comment')
-                print('Could not find "confirmed" in comment, please edit your comment')
-                print(comment.body)
+                comment.reply('Could not find "confirmed" in comment, please edit your comment')
             return False
 
         if bot_reply:
-            print("remove " + bot_reply.body)
-            # bot_reply.mod.remove()
+            bot_reply.mod.remove()
 
         return True
 
@@ -137,7 +125,7 @@ class TradeFlairer(object):
             if self._subreddit.check_user_suspended(comment.author):
                 return False
             if comment.banned_by:
-                # comment.report("Flair: Banned user")
+                comment.report("Flair: Banned user")
                 return False
 
             karma = comment.author.link_karma + comment.author.comment_karma
@@ -146,12 +134,12 @@ class TradeFlairer(object):
 
             if trade_count is not None and trade_count < self._config["flair_check"]:
                 if age < self._config["age_check"]:
-                    # comment.report("Flair: Account age")
-                    print(self._get_warning(comment, "karma"))
+                    comment.report("Flair: Account age")
+                    comment.reply(self._get_warning(parent, "karma"))
                     return False
                 if karma < self._config["karma_check"]:
-                    # comment.report("Flair: Account karma")
-                    print(self._get_warning(comment, "karma"))
+                    comment.report("Flair: Account karma")
+                    comment.reply(self._get_warning(parent, "karma"))
                     return False
 
         return True
@@ -207,8 +195,7 @@ def main():
             if tagged_user is None:
                 continue
             elif tagged_user.lower() == comment.author.name.lower():
-                # comment.report("Flair: Self-tagging")
-                print("Self-tagging")
+                comment.report("Flair: Self-tagging")
 
             for reply in comment.replies:
                 if not hasattr(reply.author, 'name'):
@@ -219,16 +206,13 @@ def main():
                         continue
 
                     if trade_flairer.check_requirements(comment, reply):
-                        # trade_flairer.flair(comment, reply)
-                        print("Added")
+                        trade_flairer.flair(comment, reply)
                         trade_flairer.add_completed(comment)
                     else:
                         trade_flairer.add_pending(comment)
-                        print("Pending")
                 else:
                     # TODO: Investigate if bot comment check is needed here
-                    # reply.report("User not tagged in parent")
-                    print("User not tagged in parent")
+                    reply.report("User not tagged in parent")
 
         trade_flairer.close_submission()
 
@@ -264,10 +248,11 @@ def main():
 
                     if reply.mod_reports:
                         reply.mod.approve()
-                    trade_flairer.flair(comment, reply)
                     trade_flairer.open_submission(comment.submission.id)
+                    trade_flairer.flair(comment, reply)
                     trade_flairer.add_completed(comment)
-                    # trade_flairer.remove_pending(comment)
+                    if comment.id in trade_flairer.pending:
+                        trade_flairer.remove_pending(comment)
                     trade_flairer.close_submission()
                     msg.reply("Trade flair added for {comment} and {reply}"
                               .format(comment=comment.author.name, reply=reply.author.name))
