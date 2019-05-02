@@ -132,12 +132,12 @@ class TradeFlairer(object):
             age = (datetime.utcnow() - datetime.utcfromtimestamp(comment.author.created_utc)).days
             trade_count = self.get_author_trade_count(comment)
 
-            if trade_count is not None and trade_count < self._config["flair_check"]:
-                if age < self._config["age_check"]:
+            if trade_count is not None and trade_count < int(self._config["flair_check"]):
+                if age < int(self._config["age_check"]):
                     comment.report("Flair: Account age")
-                    comment.reply(self._get_warning(parent, "karma"))
+                    comment.reply(self._get_warning(parent, "age"))
                     return False
-                if karma < self._config["karma_check"]:
+                if karma < int(self._config["karma_check"]):
                     comment.report("Flair: Account karma")
                     comment.reply(self._get_warning(parent, "karma"))
                     return False
