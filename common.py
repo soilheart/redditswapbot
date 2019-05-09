@@ -40,6 +40,7 @@ class SubRedditMod(object):
         self.config = self._load_config()
         self._sub_config = self.config["subreddit"]
         self.praw_h = self.login()
+        self.praw_h.read_only = True
         self.subreddit = self.praw_h.subreddit(self._sub_config["uri"])
 
     @property
@@ -97,7 +98,7 @@ class SubRedditMod(object):
             return self._removed[submission_id]
 
         submission = self.praw_h.submission(id=submission_id)
-        removed = submission.removed or (submission.author is None)
+        removed = submission.author is None
         self._removed[submission_id] = removed
         return removed
 

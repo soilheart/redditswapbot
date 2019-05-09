@@ -81,13 +81,15 @@ class PostChecker(object):
                 if re.search(regex, have, re.IGNORECASE):
                     post_category = category
                     timestamp_check = category_prop["timestamp_check"]
-        post.mod.flair(text=post_category, css_class=personal_categories[post_category]["class"])
+        #post.mod.flair(text=post_category, css_class=personal_categories[post_category]["class"])
+        print("flair: " + post_category)
 
         self.check_repost(post)
 
         if timestamp_check:
             if not re.search(self._config["timestamp_regex"], post.selftext, re.IGNORECASE):
-                post.report("Could not find timestamp...")
+                # post.report("Could not find timestamp...")
+                print("Could not find timestamp")
 
         self.post_comment(post)
 
@@ -104,7 +106,8 @@ class PostChecker(object):
                     if category_prop["required_flair"] != post.author_flair_css_class:
                         # TODO: Remove from automod and add reply here
                         pass
-                post.mod.flair(text=category, css_class=category_prop["class"])
+                # post.mod.flair(text=category, css_class=category_prop["class"])
+                print("flair: " + category)
                 if category_prop.get("reply", True):
                     self.post_comment(post)
                 return True
@@ -150,8 +153,10 @@ class PostChecker(object):
         comment = "REMOVED: Your post was automatically removed due to an incorrect title."
         comment += "\n\nYour **{bad_part}** does not match the format specified in the {rules_link}.".format(
             bad_part=bad_part, rules_link=self._subreddit.get_rules_link())
-        post.reply(comment).mod.distinguish()
-        post.mod.remove()
+        # post.reply(comment).mod.distinguish()
+        # post.mod.remove()
+        print(post.title)
+        print(comment)
 
     def post_comment(self, post):
         """
@@ -187,7 +192,8 @@ class PostChecker(object):
                           rules=self._subreddit.get_rules_link(), wiki=self._subreddit.get_wiki_link())
         disclaimer = "\n^^" + disclaimer.replace(" ", " ^^")
         comment += "{0}\n".format(disclaimer)
-        post.reply(comment).mod.distinguish()
+        # post.reply(comment).mod.distinguish()
+        print(comment)
 
     def check_repost(self, post):
         """
@@ -209,11 +215,12 @@ class PostChecker(object):
                 elif seconds_between_posts < int(self._config["upper_hour"]) * 3600:
                     LOGGER.info("Submission removed and flagged for repost violation. "
                                 "(Previous submission: https://redd.it/{})".format(last_id))
-                    post.mod.remove()
-                    reply = post.reply("Your submission has been removed and flagged for review.\n\n"
-                                       "A mod will review your submission as soon as possible "
-                                       "and approve the post if everything looks OK.")
-                    reply.report("Probable repost, link to previous post: https://redd.it/{}".format(last_id))
+                    # post.mod.remove()
+                    # reply = post.reply("Your submission has been removed and flagged for review.\n\n"
+                    #                    "A mod will review your submission as soon as possible "
+                    #                    "and approve the post if everything looks OK.")
+                    # reply.report("Probable repost, link to previous post: https://redd.it/{}".format(last_id))
+                    print("REEEEEEEEEEEEEPPPPPPOOOOOOOOOOOOOOSSSSSSSSSTTTTTTT!")
                     return
             self._update_user_db(post)
         else:
@@ -243,14 +250,15 @@ def main():
         sys.exit()
 
     while True:
-        try:
+        if True:
             first_pass = True
             processed = []
             while True:
                 new_posts = subreddit.get_new(20)
                 for post in new_posts:
                     if first_pass and subreddit.check_mod_reply(post):
-                        processed.append(post.id)
+                        pass
+                        # processed.append(post.id)
                     if post.id in processed:
                         continue
                     post_checker.check_post(post)
@@ -258,9 +266,9 @@ def main():
                 first_pass = False
                 LOGGER.debug('Sleeping for 1 minute')
                 sleep(60)
-        except Exception as exception:
-            LOGGER.error(exception)
-            sleep(60)
+        # except Exception as exception:
+        #     LOGGER.error(exception)
+        #     sleep(60)
 
 
 if __name__ == '__main__':
