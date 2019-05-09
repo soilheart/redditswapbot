@@ -210,6 +210,7 @@ def main():
                         trade_flairer.add_completed(comment)
                     else:
                         trade_flairer.add_pending(comment)
+                    break
                 else:
                     # TODO: Investigate if bot comment check is needed here
                     reply.report("User not tagged in parent")
