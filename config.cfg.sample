@@ -8,6 +8,8 @@ client_secret = YOUR_CLIENT_SECRET
 [subreddit]
 uri = YOUR_SUBREDDIT_URI
 name = YOUR_SUBREDDIT_NAME
+rules = /wiki/rules/rules
+wiki = /wiki/index/
 
 [logging]
 dest = flatfile
@@ -44,7 +46,6 @@ informational_post_format = ^\[([^\[\]]*)\][^\[\]]*$
 timestamp_regex = http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%%[0-9a-fA-F][0-9a-fA-F]))+
 # Default category for personal posts
 default_category = Trading
-rules = /wiki/rules/rules
 # The minimum hours between submissions as per the rules of the sub
 upper_hour = 24
 # Grace period during which an user may delete and repost before the next submission is considered as a repost

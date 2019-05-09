@@ -38,16 +38,25 @@ class SubRedditMod(object):
     def __init__(self, logger):
         self.logger = logger
         self.config = self._load_config()
+        self._sub_config = self.config["subreddit"]
         self.praw_h = self.login()
-        self.subreddit = self.praw_h.subreddit(self.config["subreddit"]["uri"])
+        self.subreddit = self.praw_h.subreddit(self._sub_config["uri"])
 
     @property
     def subreddit_uri(self):
-        return self.config["subreddit"]["uri"]
+        return "/r/" + self._sub_config["uri"]
 
     @property
     def username(self):
         return self.config["login"]["username"]
+
+    def get_rules_link(self, title="RULES"):
+        return "[{title}]({uri})".format(
+            title=title, uri=self.subreddit_uri + self._sub_config["rules"])
+
+    def get_wiki_link(self, title="WIKI"):
+        return "[{title}]({uri})".format(
+            title=title, uri=self.subreddit_uri + self._sub_config["wiki"])
 
     @staticmethod
     def _load_config():
@@ -66,7 +75,7 @@ class SubRedditMod(object):
 
     def get_modmail_link(self, title="modmail", subject=None, content=None):
         """ Get link to modmail """
-        link = ("https://www.reddit.com/message/compose?to=/r/{subreddit}"
+        link = ("https://www.reddit.com/message/compose?to={subreddit}"
                 .format(subreddit=self.subreddit_uri))
         if subject:
             link += "&subject=" + urllib.quote_plus(subject)

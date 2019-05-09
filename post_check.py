@@ -27,8 +27,6 @@ class PostChecker(object):
         self._user_db_cursor = self._user_db_con.cursor()
         self._post_categories = post_categories
         self._locations = locations
-        self._rules_uri = "/r/{subreddit}{rules}".format(subreddit=subreddit.config["subreddit"]["uri"],
-                                                         rules=subreddit.config["post_check"]["rules"])
 
     def _get_user_db_entry(self, post):
         self._user_db_cursor.execute('SELECT username, last_id, last_created as "last_created [timestamp]" '
@@ -150,8 +148,8 @@ class PostChecker(object):
             return
 
         comment = "REMOVED: Your post was automatically removed due to an incorrect title."
-        comment += "\n\nYour **{bad_part}** does not match the format specified in the [RULES]({rules_uri}).".format(
-            bad_part=bad_part, rules_uri=self._rules_uri)
+        comment += "\n\nYour **{bad_part}** does not match the format specified in the {rules_link}.".format(
+            bad_part=bad_part, rules_link=self._subreddit.get_rules_link())
         post.reply(comment).mod.distinguish()
         post.mod.remove()
 
@@ -176,21 +174,19 @@ class PostChecker(object):
         if isinstance(reputation, int):
             comment += "* Reputation: {0} trade(s)\n".format(reputation)
         else:
-            comment += "* Reputation: User is currently a {}.\n".format(reputation)
+            comment += "* Reputation: User is currently a {0}.\n".format(reputation)
         # TODO: Distinguish between normal flair and other flairs
-        if post.author_flair_text is not None:
-            if isinstance(reputation, int):
-                name = "Heatware"
-            else:
-                name = "Link"
-            link = "[" + str(post.author_flair_text) + "](" + str(post.author_flair_text) + ")"
-            comment += "* {0}: {1} \n".format(name, link)
-        comment += ("\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. "
-                    "^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have "
-                    "^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. "
-                    "^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the "
-                    "^^[RULES](https://www.reddit.com/r/{0}/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the "
-                    "^^[WIKI](https://www.reddit.com/r/{0}/wiki/index)").format("mechmarket")
+        if post.author_flair_text is not None and "http" in post.author_flair_text:
+            name = "Heatware" if heatware in post.author_flair_text else "Link"
+            comment += "* {0}: [{1}]({1})\n".format(name, post.author_flair_text)
+        disclaimer = ("This information does not guarantee a successful swap. "
+                      "It is being provided to help potential trade partners have "
+                      "more immediate background information about with whom they are swapping. "
+                      "Please be sure to familiarize yourself with the "
+                      "{rules} and other guides on the {wiki}").format(
+                          rules=self._subreddit.get_rules_link(), wiki=self._subreddit.get_wiki_link())
+        disclaimer = "\n^^" + disclaimer.replace(" ", " ^^")
+        comment += "{0}\n".format(disclaimer)
         post.reply(comment).mod.distinguish()
 
     def check_repost(self, post):
