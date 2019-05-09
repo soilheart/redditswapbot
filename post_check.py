@@ -171,10 +171,10 @@ class PostChecker(object):
         comment += "* Join date: {0}\n".format(age)
         comment += "* Link karma: {0}\n".format(str(post.author.link_karma))
         comment += "* Comment karma: {0}\n".format(str(post.author.comment_karma))
-        if isinstance(reputation, int):
-            comment += "* Reputation: {0} trade(s)\n".format(reputation)
-        else:
-            comment += "* Reputation: User is currently a {0}.\n".format(reputation)
+        # if isinstance(reputation, int):
+        #     comment += "* Reputation: {0} trade(s)\n".format(reputation)
+        # else:
+        #     comment += "* Reputation: User is currently a {0}.\n".format(reputation)
         # TODO: Distinguish between normal flair and other flairs
         if post.author_flair_text is not None and "http" in post.author_flair_text:
             name = "Heatware" if "heatware" in post.author_flair_text else "Link"
