@@ -147,7 +147,7 @@ class SubRedditMod(object):
         """ Check if mod already has replied """
         comments = self._get_replies(item)
 
-        for comment in comments.list():
+        for comment in comments:
             if comment.author in self.get_mods():
                 return True
         return False
@@ -156,7 +156,7 @@ class SubRedditMod(object):
         """ Check if bot has replied, if so return comment """
         comments = self._get_replies(item)
 
-        for comment in comments.list():
+        for comment in comments:
             if comment.author == self.username:
                 return comment
         return None
