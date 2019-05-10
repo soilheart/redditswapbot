@@ -177,7 +177,7 @@ class PostChecker(object):
             comment += "* Reputation: User is currently a {0}.\n".format(reputation)
         # TODO: Distinguish between normal flair and other flairs
         if post.author_flair_text is not None and "http" in post.author_flair_text:
-            name = "Heatware" if heatware in post.author_flair_text else "Link"
+            name = "Heatware" if "heatware" in post.author_flair_text else "Link"
             comment += "* {0}: [{1}]({1})\n".format(name, post.author_flair_text)
         disclaimer = ("This information does not guarantee a successful swap. "
                       "It is being provided to help potential trade partners have "
