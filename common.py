@@ -127,14 +127,15 @@ class SubRedditMod(object):
         """ Get new posts """
         return self.subreddit.new(limit=limit)
 
-    def _get_replies(self, item):
+    @staticmethod
+    def _get_replies(item):
         """ Get replies to submission or comment """
         if isinstance(item, praw.models.reddit.submission.Submission):
             comments = item.comments
         elif isinstance(item, praw.models.reddit.comment.Comment):
             comments = item.replies
         else:
-            raise TypeError, "Unknown item type %s" % type(item)
+            raise TypeError("Unknown item type {}".format(type(item)))
         return comments
 
     def get_mods(self):

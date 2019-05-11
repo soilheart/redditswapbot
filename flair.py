@@ -168,7 +168,6 @@ class TradeFlairer(object):
                 self._trade_count_cache[comment.author.name] = trade_count
         reply.reply(self._config["reply"])
 
-
     def process_post(self, post):
 
         self.open_submission(post)
@@ -219,9 +218,10 @@ class TradeFlairer(object):
             comment_id = comment_link.group(1)
             comment = self._subreddit.praw_h.comment(id=comment_id).refresh()
 
-            tagged_user = self.check_top_level_comment(comment)
+            tagged_user = self.check_top_level_comment(comment)  # pylint: disable=unused-variable
+            # TODO: Restore when stop supporting old confirmation threads
             # if tagged_user is None:
-            if not "u/" in comment.body.lower():
+            if "u/" not in comment.body.lower():
                 msg.reply("Could not find /u/[user] in comment, sure you submitted the top level comment?")
                 msg.mark_read()
                 continue
@@ -233,6 +233,7 @@ class TradeFlairer(object):
                 msg.mark_read()
                 continue
 
+            # TODO: Restore when stop supporting old confirmation threads
             # if comment_id not in self.pending:
             #     msg.reply("Could not find comment {id} in pending trade confirmations"
             #               .format(id=comment_id))
@@ -242,6 +243,7 @@ class TradeFlairer(object):
             if comment.mod_reports:
                 comment.mod.approve()
             for reply in comment.replies:
+                # TODO: Restore when stop supporting old confirmation threads
                 # if reply.author.name.lower() == tagged_user.lower():
                 if reply.author.name.lower() in comment.body.lower():
                     if not self.check_reply(reply):

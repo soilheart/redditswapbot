@@ -1,3 +1,8 @@
+[BASIC]
+
+# Don't require docstring for short functions/methods
+docstring-min-length=3
+
 [FORMAT]
 
 # Maximum number of characters on a single line.
