@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+import sys
 import re
 import argparse
 from datetime import datetime
@@ -168,30 +169,17 @@ class TradeFlairer(object):
         reply.reply(self._config["reply"])
 
 
-def main():
+    def process_post(self, post):
 
-    parser = argparse.ArgumentParser(description="Process flairs")
-    parser.add_argument("-m", action="store", dest="post", default="curr",
-                        help="Which trade post to process (curr, prev or submission id)")
-    args = parser.parse_args()
+        self.open_submission(post)
 
-    # try:
-    if True:
-        # Setup SubRedditMod
-        subreddit = SubRedditMod(LOGGER)
-
-        # Setup tradeflairer
-        trade_flairer = TradeFlairer(subreddit, LOGGER)
-
-        trade_flairer.open_submission(args.post)
-
-        for comment in trade_flairer.get_unhandled_comments():
+        for comment in self.get_unhandled_comments():
             if not hasattr(comment.author, 'name'):
                 # Deleted comment, ignore comment and move on
-                trade_flairer.add_completed(comment)
+                self.add_completed(comment)
                 continue
 
-            tagged_user = trade_flairer.check_top_level_comment(comment)
+            tagged_user = self.check_top_level_comment(comment)
             if tagged_user is None:
                 continue
             elif tagged_user.lower() == comment.author.name.lower():
@@ -202,22 +190,24 @@ def main():
                     # Deleted comment, ignore comment and move on
                     continue
                 if reply.author.name.lower() == tagged_user.lower():
-                    if not trade_flairer.check_reply(reply):
+                    if not self.check_reply(reply):
                         continue
 
-                    if trade_flairer.check_requirements(comment, reply):
-                        trade_flairer.flair(comment, reply)
-                        trade_flairer.add_completed(comment)
+                    if self.check_requirements(comment, reply):
+                        self.flair(comment, reply)
+                        self.add_completed(comment)
                     else:
-                        trade_flairer.add_pending(comment)
+                        self.add_pending(comment)
                     break
                 else:
                     # TODO: Investigate if bot comment check is needed here
                     reply.report("User not tagged in parent")
 
-        trade_flairer.close_submission()
+        self.close_submission()
 
-        for msg in subreddit.get_unread_mod_messages():
+    def process_mod_messages(self):
+
+        for msg in self._subreddit.get_unread_mod_messages():
             LOGGER.info("Processing PM from mod: " + msg.author.name)
             pattern = r"^https?:\/\/(?:www\.)?reddit\.com\/r\/.*\/comments\/.{6}\/.*\/(.{7})\/$"
             comment_link = re.search(pattern, msg.body)
@@ -227,36 +217,41 @@ def main():
                 continue
 
             comment_id = comment_link.group(1)
-            # if comment_id not in trade_flairer.pending:
-            #     msg.reply("Could not find comment {id} in pending trade confirmations"
-            #               .format(id=comment_id))
-            #     msg.mark_read()
-            #     continue
+            comment = self._subreddit.praw_h.comment(id=comment_id).refresh()
 
-            comment = subreddit.praw_h.comment(id=comment_id).refresh()
-            tagged_user = trade_flairer.check_top_level_comment(comment)
+            tagged_user = self.check_top_level_comment(comment)
             # if tagged_user is None:
             if not "u/" in comment.body.lower():
                 msg.reply("Could not find /u/[user] in comment, sure you submitted the top level comment?")
                 msg.mark_read()
                 continue
 
+            self.open_submission(comment.submission.id)
+
+            if comment_id in self.completed:
+                msg.reply("Trade already completed")
+                msg.mark_read()
+                continue
+
+            # if comment_id not in self.pending:
+            #     msg.reply("Could not find comment {id} in pending trade confirmations"
+            #               .format(id=comment_id))
+            #     msg.mark_read()
+            #     continue
+
             if comment.mod_reports:
                 comment.mod.approve()
             for reply in comment.replies:
                 # if reply.author.name.lower() == tagged_user.lower():
                 if reply.author.name.lower() in comment.body.lower():
-                    if not trade_flairer.check_reply(reply):
+                    if not self.check_reply(reply):
                         continue
-
                     if reply.mod_reports:
                         reply.mod.approve()
-                    trade_flairer.open_submission(comment.submission.id)
-                    trade_flairer.flair(comment, reply)
-                    trade_flairer.add_completed(comment)
-                    if comment.id in trade_flairer.pending:
-                        trade_flairer.remove_pending(comment)
-                    trade_flairer.close_submission()
+                    self.flair(comment, reply)
+                    self.add_completed(comment)
+                    if comment.id in self.pending:
+                        self.remove_pending(comment)
                     msg.reply("Trade flair added for {comment} and {reply}"
                               .format(comment=comment.author.name, reply=reply.author.name))
                     msg.mark_read()
@@ -264,10 +259,33 @@ def main():
             else:
                 msg.reply("Could not find confirmation reply on submitted comment")
                 msg.mark_read()
+            self.close_submission()
 
-    # except Exception as exception:
-    #     LOGGER.error(exception)
-    #     sys.exit()
+
+def main():
+
+    parser = argparse.ArgumentParser(description="Process flairs")
+    parser.add_argument("-m", dest="post", default="curr",
+                        help="Which trade post to process (curr, prev or submission id)")
+    parser.add_argument("-p", "--pm", dest="pm_only", default=False, action="store_true",
+                        help="Only process PMs (from mods)")
+    args = parser.parse_args()
+
+    try:
+        # Setup SubRedditMod
+        subreddit = SubRedditMod(LOGGER)
+
+        # Setup tradeflairer
+        trade_flairer = TradeFlairer(subreddit, LOGGER)
+
+        if not args.pm_only:
+            trade_flairer.process_post(args.post)
+
+        trade_flairer.process_mod_messages()
+
+    except Exception as exception:
+        LOGGER.error(exception)
+        sys.exit()
 
 
 if __name__ == '__main__':
