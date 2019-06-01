@@ -12,11 +12,12 @@ cfg_file = SafeConfigParser()
 path_to_cfg = os.path.join(containing_dir, 'config.cfg')
 cfg_file.read(path_to_cfg)
 
-username = cfg_file.get('reddit', 'username')
-password = cfg_file.get('reddit', 'password')
-app_key = cfg_file.get('reddit', 'app_key')
-app_secret = cfg_file.get('reddit', 'app_secret')
-subreddit = cfg_file.get('reddit', 'subreddit')
+username = cfg_file.get('login', 'username')
+password = cfg_file.get('login', 'password')
+app_key = cfg_file.get('login', 'client_id')
+app_secret = cfg_file.get('login', 'client_secret')
+user_agent = cfg_file.get('login', 'user_agent')
+subreddit = cfg_file.get('subreddit', 'name')
 curr_id = cfg_file.get('trade', 'link_id')
 
 # configure logging
@@ -31,7 +32,7 @@ def login():
                     client_secret=app_secret,
                     username=username,
                     password=password,
-                    user_agent=username)
+                    user_agent=user_agent)
     return(r)
 
 def post_thread(r,month):
