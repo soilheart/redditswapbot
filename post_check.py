@@ -256,8 +256,13 @@ def main():
                     post_checker.check_post(post)
                     processed.append(post.id)
                 first_pass = False
-                LOGGER.debug('Sleeping for 1 minute')
+                LOGGER.debug("Sleeping for 1 minute")
                 sleep(60)
+
+        except KeyboardInterrupt:
+            print("\nCtrl-C pressed, exiting gracefully")
+            sys.exit(0)
+
         except Exception as exception:
             LOGGER.error(exception)
             sleep(60)

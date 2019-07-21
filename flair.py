@@ -285,6 +285,10 @@ def main():
 
         trade_flairer.process_mod_messages()
 
+    except KeyboardInterrupt:
+        print("\nCtrl-C pressed, exiting gracefully")
+        sys.exit()
+
     except Exception as exception:
         LOGGER.error(exception)
         sys.exit()
