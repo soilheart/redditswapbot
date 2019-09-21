@@ -84,8 +84,9 @@ class PostChecker(object):
         self.check_repost(post)
 
         if timestamp_check:
-            if not re.search(self._config["timestamp_regex"], post.selftext, re.IGNORECASE):
-                post.report("Could not find timestamp...")
+            lines = list(line for line in post.selftext.splitlines() if line)
+            if not re.search(self._config["timestamp_regex"], " ".join(lines[:3]), re.IGNORECASE):
+                post.report("Could not find timestamp in first paragraphs")
 
         self.post_comment(post)
 
