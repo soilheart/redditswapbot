@@ -29,20 +29,18 @@ class PostChecker(object):
         self._locations = locations
 
     def _get_user_db_entry(self, post):
-        self._user_db_cursor.execute('SELECT username, last_id, last_created as "last_created [timestamp]" '
+        self._user_db_cursor.execute('SELECT username, personal_last_id, personal_last_created '
                                      'FROM user WHERE username=?', (post.author.name,))
 
         return self._user_db_cursor.fetchone()
 
     def _update_user_db(self, post):
-        post_created = datetime.utcfromtimestamp(post.created_utc)
-        self._user_db_cursor.execute('UPDATE OR IGNORE user SET last_created=?, last_id=? WHERE username=?',
-                                     (post_created, post.id, post.author.name))
+        self._user_db_cursor.execute('UPDATE OR IGNORE user SET personal_last_created=?, personal_last_id=? WHERE username=?',
+                                     (post.created_utc, post.id, post.author.name))
 
     def _add_to_user_db(self, post):
-        post_created = datetime.utcfromtimestamp(post.created_utc)
-        self._user_db_cursor.execute('INSERT OR IGNORE INTO user (username, last_created, last_id) VALUES (?, ?, ?)',
-                                     (post.author.name, post_created, post.id))
+        self._user_db_cursor.execute('INSERT OR IGNORE INTO user (username, personal_last_created, personal_last_id) VALUES (?, ?, ?)',
+                                     (post.author.name, post.created_utc, post.id))
 
     def _is_personal_post(self, title):
         return bool(re.search(self._config["trade_post_format"], title))
@@ -196,19 +194,18 @@ class PostChecker(object):
 
         db_row = self._get_user_db_entry(post)
         if db_row is not None:
-            last_id = db_row["last_id"]
-            last_created = db_row["last_created"]
+            _, last_id, last_created = db_row
             if post.id != last_id:
                 LOGGER.info("Checking post {} for repost violation".format(post.id))
-                post_created = datetime.utcfromtimestamp(post.created_utc)
-                seconds_between_posts = (post_created - last_created).total_seconds()
+                post_created = post.created_utc
+                seconds_between_posts = (post_created - last_created)
                 if (seconds_between_posts < int(self._config["lower_min"]) * 60 and
                         self._subreddit.is_removed(last_id)):
-                    LOGGER.info("Submission not reported because grace period. "
-                                "(Previous submission: https://redd.it/{})".format(last_id))
+                    LOGGER.info("Submission https://redd.it/{} not reported because grace period. "
+                                "(Previous submission: https://redd.it/{})".format(post.id, last_id))
                 elif seconds_between_posts < int(self._config["upper_hour"]) * 3600:
-                    LOGGER.info("Submission removed and flagged for repost violation. "
-                                "(Previous submission: https://redd.it/{})".format(last_id))
+                    LOGGER.info("Submission https://redd.it/{} removed and flagged for repost violation. "
+                                "(Previous submission: https://redd.it/{})".format(post.id, last_id))
                     post.mod.remove()
                     reply = post.reply("Your submission has been removed and flagged for review.\n\n"
                                        "A mod will review your submission as soon as possible "
@@ -235,7 +232,7 @@ def main():
 
         # Setup PostChecker
         user_db = subreddit.config["trade"]["user_db"]
-        db_con = sqlite3.connect(user_db, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+        db_con = sqlite3.connect(user_db)
         db_con.row_factory = sqlite3.Row
         post_checker = PostChecker(subreddit, db_con, post_categories, locations)
     except Exception as exception:
