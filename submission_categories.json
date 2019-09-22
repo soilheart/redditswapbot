@@ -21,7 +21,8 @@
 	    "tag": "META",
 	    "class": "meta",
 	    "required_flair": "i-mod",
-	    "no_reply": true
+	    "reply": false,
+	    "repost_check": false
 	},
 	"Interest Check": {
 	    "tag": "IC",
@@ -46,7 +47,8 @@
 	},
 	"Giveaway": {
 	    "tag": "Giveaway",
-	    "class": "giveaway"
+	    "class": "giveaway",
+	    "repost_check": false
 	}
     }
 }

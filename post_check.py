@@ -29,17 +29,17 @@ class PostChecker(object):
         self._locations = locations
 
     def _get_user_db_entry(self, post):
-        self._user_db_cursor.execute('SELECT username, personal_last_id, personal_last_created '
-                                     'FROM user WHERE username=?', (post.author.name,))
-
+        self._user_db_cursor.execute('SELECT * FROM user WHERE username=?', (post.author.name,))
         return self._user_db_cursor.fetchone()
 
-    def _update_user_db(self, post):
-        self._user_db_cursor.execute('UPDATE OR IGNORE user SET personal_last_created=?, personal_last_id=? WHERE username=?',
+    def _update_user_db(self, post, fields_to_set):
+        fields = ", ".join(field + "=?" for field in fields_to_set)
+        self._user_db_cursor.execute('UPDATE OR IGNORE user SET {} WHERE username=?'.format(fields),
                                      (post.created_utc, post.id, post.author.name))
 
-    def _add_to_user_db(self, post):
-        self._user_db_cursor.execute('INSERT OR IGNORE INTO user (username, personal_last_created, personal_last_id) VALUES (?, ?, ?)',
+    def _add_to_user_db(self, post, fields_to_set):
+        fields = ", ".join(("username",) + fields_to_set)
+        self._user_db_cursor.execute('INSERT OR IGNORE INTO user ({}) VALUES (?, ?, ?)'.format(fields),
                                      (post.author.name, post.created_utc, post.id))
 
     def _is_personal_post(self, title):
@@ -79,9 +79,10 @@ class PostChecker(object):
                 if re.search(regex, have, re.IGNORECASE):
                     post_category = category
                     timestamp_check = category_prop["timestamp_check"]
+
         post.mod.flair(text=post_category, css_class=personal_categories[post_category]["class"])
 
-        self.check_repost(post)
+        self.check_repost(post, "personal")
 
         if timestamp_check:
             lines = list(line for line in post.selftext.splitlines() if line)
@@ -99,17 +100,28 @@ class PostChecker(object):
 
         for category, category_prop in self._post_categories["nonpersonal"].items():
             if tag == category_prop["tag"]:
-                if "required_flair" in category_prop:
-                    if category_prop["required_flair"] != post.author_flair_css_class:
-                        # TODO: Remove from automod and add reply here
-                        pass
-                post.mod.flair(text=category, css_class=category_prop["class"])
-                if category_prop.get("reply", True):
-                    self.post_comment(post)
-                return True
+                post_category = category
+                post_category_prop = category_prop
+                break
+        else:
+            self.remove_post(post, "tag")
+            return False
 
-        self.remove_post(post, "tag")
-        return False
+        post.mod.flair(text=post_category, css_class=post_category_prop["class"])
+
+        if "required_flair" in post_category_prop:
+            if post_category_prop["required_flair"] != post.author_flair_css_class:
+                # TODO: Remove from automod and add reply here
+                pass
+
+        if post_category_prop.get("repost_check", True):
+            self.check_repost(post, "nonpersonal")
+
+        if post_category_prop.get("reply", True):
+            self.post_comment(post)
+
+        return True
+
 
     def check_post(self, post):
         """
@@ -188,14 +200,17 @@ class PostChecker(object):
         comment += "{0}\n".format(disclaimer)
         post.reply(comment).mod.distinguish()
 
-    def check_repost(self, post):
+    def check_repost(self, post, category_prefix="personal"):
         """
         Check post for repost rule violations
         """
 
         db_row = self._get_user_db_entry(post)
+        last_created_col = "{}_last_created".format(category_prefix)
+        last_id_col = "{}_last_id".format(category_prefix)
         if db_row is not None:
-            _, last_id, last_created = db_row
+            last_id = db_row[last_id_col]
+            last_created = db_row[last_created_col]
             if post.id != last_id:
                 LOGGER.info("Checking post {} for repost violation".format(post.id))
                 post_created = post.created_utc
@@ -213,9 +228,9 @@ class PostChecker(object):
                                        "and approve the post if everything looks OK.")
                     reply.report("Probable repost, link to previous post: https://redd.it/{}".format(last_id))
                     return
-            self._update_user_db(post)
+            self._update_user_db(post, (last_created_col, last_id_col))
         else:
-            self._add_to_user_db(post)
+            self._add_to_user_db(post, (last_created_col, last_id_col))
 
         self._user_db_con.commit()
 
