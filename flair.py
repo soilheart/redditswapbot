@@ -135,11 +135,9 @@ class TradeFlairer(object):
 
             if trade_count is not None and trade_count < int(self._config["flair_check"]):
                 if age < int(self._config["age_check"]):
-                    comment.report("Flair: Account age")
                     comment.reply(self._get_warning(parent, "age"))
                     return False
                 if karma < int(self._config["karma_check"]):
-                    comment.report("Flair: Account karma")
                     comment.reply(self._get_warning(parent, "karma"))
                     return False
 
@@ -199,7 +197,6 @@ class TradeFlairer(object):
                         self.add_pending(comment)
                     break
                 else:
-                    # TODO: Investigate if bot comment check is needed here
                     reply.report("User not tagged in parent")
 
         self.close_submission()
