@@ -164,7 +164,11 @@ class TradeFlairer(object):
                 new_flair_css_class = "i-{trade_count}".format(trade_count=trade_count)
                 self._subreddit.update_comment_user_flair(comment, css_class=new_flair_css_class)
                 self._trade_count_cache[comment.author.name] = trade_count
-        reply.reply(self._config["reply"])
+        try:
+            reply.reply(self._config["reply"])
+        except Exception as exception:
+            LOGGER.info("Failed to reply, probably because of too old comment")
+
 
     def process_post(self, post):
 
