@@ -54,7 +54,7 @@ class PostChecker(object):
         location, have, want = re.search(self._config["trade_post_format"], clean_title).groups()
 
         if "-" in location:
-            primary, secondary = location.split("-")
+            primary, secondary = location.split("-", 1)
         else:
             primary = "OTHER"
             secondary = location
