@@ -28,6 +28,11 @@
 	    "tag": "IC",
 	    "class": "interestcheck"
 	},
+	"Fundraiser": {
+	    "tag": "Fundraiser",
+	    "class": "fundraiser",
+	    "repost_check": false
+	},
 	"Group Buy": {
 	    "tag": "GB",
 	    "class": "groupbuy"
