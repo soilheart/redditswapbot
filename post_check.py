@@ -86,8 +86,14 @@ class PostChecker(object):
 
         if timestamp_check:
             lines = list(line for line in post.selftext.splitlines() if line)
+            if not re.search(self._config["timestamp_regex"], post.selftext, re.IGNORECASE):
+                post.report("Could not find timestamp.")
             if not re.search(self._config["timestamp_regex"], " ".join(lines[:3]), re.IGNORECASE):
-                post.report("Could not find timestamp in first paragraphs")
+                post.reply("Hello, we have updated the rules with a recommendation to include the "
+                           "timestamp at the beginning of the submission and I could not find any "
+                           "timestamp in the beginning of your submission.\n\n"
+                           "(If this is not true, for example if this is a 'Buying' submission, "
+                           "you can ignore this comment)")
 
         self.post_comment(post)
 
