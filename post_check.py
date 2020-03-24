@@ -122,7 +122,6 @@ class PostChecker(object):
 
         return True
 
-
     def check_post(self, post):
         """
         Check post for rule violations

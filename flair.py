@@ -166,9 +166,8 @@ class TradeFlairer(object):
                 self._trade_count_cache[comment.author.name] = trade_count
         try:
             reply.reply(self._config["reply"])
-        except Exception as exception:
+        except Exception:
             LOGGER.info("Failed to reply, probably because of too old comment")
-
 
     def process_post(self, post):
 
@@ -219,8 +218,8 @@ class TradeFlairer(object):
             comment_id = comment_link.group(1)
             comment = self._subreddit.praw_h.comment(id=comment_id).refresh()
 
-            tagged_user = self.check_top_level_comment(comment)  # pylint: disable=unused-variable
             # TODO: Restore when stop supporting old confirmation threads
+            # tagged_user = self.check_top_level_comment(comment)
             # if tagged_user is None:
             if "u/" not in comment.body.lower():
                 msg.reply("Could not find /u/[user] in comment, sure you submitted the top level comment?")
