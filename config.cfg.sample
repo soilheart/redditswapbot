@@ -50,6 +50,9 @@ default_category = Trading
 upper_hour = 24
 # Grace period during which an user may delete and repost before the next submission is considered as a repost
 lower_min = 15
+# User submission history location, if set the title and text of all (non-removed) submissions are
+# saved into user-specific sub-directories to of the specified directory
+user_history_dir =
 
 [price]
 link_id = PRICE_CHECK_POST_LINK_ID

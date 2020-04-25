@@ -6,6 +6,7 @@ import re
 import sqlite3
 import unicodedata
 import json
+import os
 from datetime import datetime
 from time import sleep
 
@@ -48,6 +49,16 @@ class PostChecker(object):
     def _is_nonpersonal_post(self, title):
         return bool(re.search(self._config["informational_post_format"], title))
 
+    def save_submission(self, post):
+        user_path = os.path.join(self._config["user_history_dir"], str(post.author))
+
+        if not os.path.exists(user_path):
+            os.makedirs(user_path)
+
+        with open(os.path.join(user_path, post.id), "w") as f:
+            f.write(unicodedata.normalize('NFKD', post.title).encode('ascii', 'ignore') + "\n")
+            f.write(unicodedata.normalize('NFKD', post.selftext).encode('ascii', 'ignore'))
+
     def check_and_flair_personal(self, post, clean_title):
         """ Check title of personal post and flair accordingly """
 
@@ -63,6 +74,9 @@ class PostChecker(object):
                 secondary not in self._locations[primary]):
             self.remove_post(post, "location")
             return False
+
+        if self._config["user_history_dir"]:
+            self.save_submission(post)
 
         timestamp_check = False
         post_category = self._config["default_category"]
