@@ -242,7 +242,8 @@ class PostChecker(object):
                     LOGGER.info("Submission https://redd.it/{} removed and flagged for repost violation. "
                                 "(Previous submission: https://redd.it/{})".format(post.id, last_id))
                     post.mod.remove()
-                    reply = post.reply("Your submission has been removed and flagged for review.\n\n"
+                    reply = post.reply("Your submission has automatically been flagged for review. "
+                                       "Please do not delete your submission and/or make a new submission.\n\n"
                                        "A mod will review your submission as soon as possible "
                                        "and approve the post if everything looks OK.")
                     reply.report("Probable repost, link to previous post: https://redd.it/{}".format(last_id))
