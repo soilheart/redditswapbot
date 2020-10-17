@@ -12,10 +12,9 @@ logging_dest = cfg_file.get('logging','dest')
 sentry = cfg_file.get('logging','sentry')
 
 try:
-    from raven.handlers.logging import SentryHandler
-    from raven.conf import setup_logging
+    import sentry_sdk
 except ImportError:
-    # Raven not installed, skip sentry even though config exists
+    # sentry_sdk not installed, skip sentry even though config exists
     sentry = ""
 
 mysql_hostname = cfg_file.get('mysql', 'hostname')
@@ -29,6 +28,9 @@ class Singleton(type):
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances.keys():
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+            if sentry and not "disable_sentry" in kwargs:
+                sentry_sdk.init(sentry)
+
         return cls._instances[cls]
 
 class LoggerManager(object):
@@ -40,7 +42,7 @@ class LoggerManager(object):
         pass
 
     @staticmethod
-    def getLogger(name=None):
+    def getLogger(name=None, enable_sentry=True):
         #configure logging
         LoggerManager._loggers[name] = logging.getLogger(name)
         LoggerManager._loggers[name].setLevel(logging.INFO)
@@ -54,11 +56,6 @@ class LoggerManager(object):
             fileh = logging.FileHandler('actions.log')
             fileh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(module)s - %(message)s'))
             LoggerManager._loggers[name].addHandler(fileh)
-
-        if sentry:
-            sentryh = SentryHandler(sentry)
-            sentryh.setLevel(logging.ERROR)
-            setup_logging(sentryh)
 
         requests_log = logging.getLogger("requests")
         requests_log.setLevel(logging.WARNING)
