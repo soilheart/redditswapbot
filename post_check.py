@@ -197,7 +197,9 @@ class PostChecker(object):
         except ValueError:
             reputation = post.author_flair_css_class.lstrip('i-')
 
-        comment = "* Username: /u/{0} ^[[PM]](https://www.reddit.com/message/compose/?to={0})\n".format(str(post.author.name))
+        comment = "* Username: /u/{0}\n".format(str(post.author.name))
+        comment += ("  * [[Click here to send a PM to this user]](https://www.reddit.com/message/compose/?to={0})\n"
+                    .format(str(post.author.name)))
         comment += "* Join date: {0}\n".format(age)
         comment += "* Link karma: {0}\n".format(str(post.author.link_karma))
         comment += "* Comment karma: {0}\n".format(str(post.author.comment_karma))
