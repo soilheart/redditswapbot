@@ -4,7 +4,7 @@ import sys
 import os
 import urllib
 
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 
 import praw
 import puni
@@ -87,9 +87,9 @@ class SubRedditMod(object):
         link = ("https://www.reddit.com/message/compose?to={subreddit}"
                 .format(subreddit=self.subreddit_uri))
         if subject:
-            link += "&subject=" + urllib.quote_plus(subject)
+            link += "&subject=" + urllib.parse.quote_plus(subject)
         if content:
-            link += "&message=" + urllib.quote_plus(content)
+            link += "&message=" + urllib.parse.quote_plus(content)
         return "[{title}]({link})".format(title=title, link=link)
 
     def get_unread_messages(self):

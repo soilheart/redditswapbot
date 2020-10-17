@@ -1,5 +1,5 @@
 import sys, os
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 import logging
 import mySQLHandler
 
@@ -33,9 +33,7 @@ class Singleton(type):
 
         return cls._instances[cls]
 
-class LoggerManager(object):
-    __metaclass__ = Singleton
-
+class LoggerManager(object, metaclass=Singleton):
     _loggers = {}
 
     def __init__(self, *args, **kwargs):

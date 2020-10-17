@@ -2,7 +2,7 @@
 
 import sys, os
 import re
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 import praw
 import time
 from log_conf import LoggerManager
