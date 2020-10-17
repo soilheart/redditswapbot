@@ -12,14 +12,7 @@ rules = /wiki/rules/rules
 wiki = /wiki/index/
 
 [logging]
-dest = flatfile
 sentry =
-
-[mysql]
-hostname = MYSQL_HOST_NAME
-username = MYSQL_USER_NAME
-password = MYSQL_PASSWORD
-database = MYSQL_DATABASE
 
 [trade]
 link_id = TRADE_POST_LINK_ID

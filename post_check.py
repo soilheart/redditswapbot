@@ -56,8 +56,8 @@ class PostChecker(object):
             os.makedirs(user_path)
 
         with open(os.path.join(user_path, post.id), "w") as f:
-            f.write(unicodedata.normalize('NFKD', post.title).encode('ascii', 'ignore') + "\n")
-            f.write(unicodedata.normalize('NFKD', post.selftext).encode('ascii', 'ignore'))
+            f.write(unicodedata.normalize('NFKD', post.title).encode('ascii', 'ignore').decode() + "\n")
+            f.write(unicodedata.normalize('NFKD', post.selftext).encode('ascii', 'ignore').decode())
 
     def check_and_flair_personal(self, post, clean_title):
         """ Check title of personal post and flair accordingly """
@@ -147,7 +147,7 @@ class PostChecker(object):
         Check post for rule violations
         """
 
-        clean_title = unicodedata.normalize('NFKD', post.title).encode('ascii', 'ignore')
+        clean_title = unicodedata.normalize('NFKD', post.title).encode('ascii', 'ignore').decode()
 
         if self._is_personal_post(clean_title):
             if "trade_post_format_strict" in self._config:
