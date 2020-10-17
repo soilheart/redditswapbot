@@ -158,18 +158,23 @@ class TradeFlairer(object):
             trade_count = None
         return trade_count
 
-    def flair(self, parent, reply):
+    def flair(self, parent, reply, dock_trade=False):
         for comment in parent, reply:
             trade_count = self.get_author_trade_count(comment)
             if trade_count is not None:
-                trade_count += 1
+                if dock_trade:
+                    trade_count -= 1
+                else:
+                    trade_count += 1
                 new_flair_css_class = "i-{trade_count}".format(trade_count=trade_count)
                 self._subreddit.update_comment_user_flair(comment, css_class=new_flair_css_class)
                 self._trade_count_cache[comment.author.name] = trade_count
-        try:
-            reply.reply(self._config["reply"])
-        except Exception:
-            LOGGER.info("Failed to reply, probably because of too old comment")
+
+        if not dock_trade:
+            try:
+                reply.reply(self._config["reply"])
+            except Exception:
+                LOGGER.info("Failed to reply, probably because of too old comment")
 
     def process_post(self, post):
 
