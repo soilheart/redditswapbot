@@ -7,6 +7,7 @@ import urllib
 from ConfigParser import SafeConfigParser
 
 import praw
+import puni
 
 
 class DictConfigParser(SafeConfigParser):
@@ -41,6 +42,7 @@ class SubRedditMod(object):
         self._sub_config = self.config["subreddit"]
         self.praw_h = self.login()
         self.subreddit = self.praw_h.subreddit(self._sub_config["uri"])
+        self.puni_h = puni.UserNotes(self.praw_h, self.subreddit)
 
     @property
     def subreddit_uri(self):
@@ -49,6 +51,13 @@ class SubRedditMod(object):
     @property
     def username(self):
         return self.config["login"]["username"]
+
+    def get_usernotes(self, username):
+        return self.puni_h.get_notes(username)
+
+    def set_usernote(self, user, reason, link='', warning='none'):
+        note = puni.Note(user, reason, self._sub_config["uri"], self.username, link, warning)
+        self.puni_h.add_note(note)
 
     def get_rules_link(self, title="RULES"):
         return "[{title}]({uri})".format(
