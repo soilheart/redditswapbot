@@ -19,8 +19,8 @@ def main():
 
     try:
         con = lite.connect('user.db')
-    except lite.Error, e:
-        print "Error %s:" % e.args[0]
+    except lite.Error as e:
+        print("Error %s:" % e.args[0])
         sys.exit(1)
 
     curs = con.cursor()

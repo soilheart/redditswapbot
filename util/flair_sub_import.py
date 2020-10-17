@@ -4,7 +4,7 @@ import sys, os
 import json
 import argparse
 import praw
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 
 containing_dir = os.path.dirname(os.path.abspath(os.path.dirname(sys.argv[0])))
 cfg_file = SafeConfigParser()
@@ -49,7 +49,7 @@ def load_json(file):
 
 def load_csv(file):
     flair_dict = []
-    print "start"
+    print("start")
     with open(file) as flair:
         for line in flair:
             username, flair_css, flair_text = line.rstrip().split(',')
