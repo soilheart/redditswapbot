@@ -34,9 +34,11 @@ class TradeFlairer(object):
         self._logger.info("Opening trade confirmation submission {id}".format(id=submission))
 
         with open(submission + "_completed.log", "a+") as completed_file:
+            completed_file.seek(0)
             self.completed = completed_file.read().splitlines()
 
         with open(submission + "_pending.log", "a+") as pending_file:
+            pending_file.seek(0)
             self.pending = pending_file.read().splitlines()
 
     def close_submission(self):
