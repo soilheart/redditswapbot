@@ -59,7 +59,7 @@ def change_sidebar(r, post_id):
 
 def update_config(post_id):
     cfg_file.set('price', 'link_id', post_id)
-    with open(r'config.cfg', 'wb') as configfile:
+    with open(r'config.cfg', 'w') as configfile:
         cfg_file.write(configfile)
 
 def main():

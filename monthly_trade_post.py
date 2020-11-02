@@ -56,7 +56,7 @@ def change_sidebar(r, post_id, month):
 def update_config(post_id):
     cfg_file.set('trade', 'prevlink_id', curr_id)
     cfg_file.set('trade', 'link_id', post_id)
-    with open(r'config.cfg', 'wb') as configfile:
+    with open(r'config.cfg', 'w') as configfile:
         cfg_file.write(configfile)
 
 def main():
